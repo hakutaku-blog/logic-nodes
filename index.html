@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logic-Nodes</title>
-  <!-- Markdownをキレイに変換・装飾するライブラリ -->
+  <!-- Markdownパース & GitHub風スタイル -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css">
   <style>
@@ -14,9 +14,11 @@
       max-width: 850px;
       margin: 0 auto;
       padding: 45px 20px;
+      background-color: #0d1117;
+      color: #c9d1d9;
     }
     .header {
-      border-bottom: 1px solid #e1e4e8;
+      border-bottom: 1px solid #30363d;
       padding-bottom: 15px;
       margin-bottom: 30px;
     }
@@ -26,11 +28,15 @@
     }
     .article-item {
       margin-bottom: 15px;
+      padding: 12px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: #161b22;
     }
     .article-link {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #0366d6;
+      color: #58a6ff;
       text-decoration: none;
       cursor: pointer;
     }
@@ -41,16 +47,20 @@
       display: none;
       margin-bottom: 20px;
       padding: 8px 16px;
-      background: #2ea44f;
+      background: #238636;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
     }
+    .markdown-body {
+      background-color: transparent !important;
+      color: #c9d1d9 !important;
+    }
   </style>
 </head>
-<body class="markdown-body">
+<body>
   <div class="header">
     <h1>Logic-Nodes</h1>
     <p>最新の技術ナレッジ・地雷回避ガイド</p>
@@ -59,25 +69,62 @@
   <button id="back-btn" onclick="showList()">← 記事一覧に戻る</button>
 
   <div id="list-view">
-    <ul class="article-list">
-      <li class="article-item">
-        <a class="article-link" onclick="loadArticle('src/posts/2026-07-28-auto-article.md')">
-          2026-07-28: 最新技術ハック・トラブルシューティング
-        </a>
-      </li>
+    <ul class="article-list" id="article-container">
+      <li class="article-item">読み込み中...</li>
     </ul>
   </div>
 
-  <div id="article-view" style="display: none;"></div>
+  <div id="article-view" class="markdown-body" style="display: none;"></div>
 
   <script>
-    async function loadArticle(filePath) {
+    // GitHub API経由で src/posts 内のファイル一覧を自動取得
+    async function init() {
+      const container = document.getElementById('article-container');
       try {
-        const response = await fetch(filePath);
+        const repoPath = window.location.pathname.split('/')[1] || 'logic-nodes';
+        const owner = window.location.hostname.split('.')[0];
+        const apiUrl = `https://api.github.com/repos/${owner}/${repoPath}/contents/src/posts`;
+        
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("記事一覧の取得に失敗しました");
+        const files = await res.json();
+        
+        // .md ファイルだけ抽出し、新しい順（降順）にソート
+        const mdFiles = files
+          .filter(f => f.name.endsWith('.md'))
+          .sort((a, b) => b.name.localeCompare(a.name));
+
+        if (mdFiles.length === 0) {
+          container.innerHTML = '<li class="article-item">まだ記事がありません。</li>';
+          return;
+        }
+
+        container.innerHTML = '';
+        mdFiles.forEach(file => {
+          const li = document.createElement('li');
+          li.className = 'article-item';
+          const title = file.name.replace('.md', '').replace('-auto-article', '');
+          li.innerHTML = `<a class="article-link" onclick="loadArticle('${file.download_url}')">${title} の記事を読む</a>`;
+          container.appendChild(li);
+        });
+      } catch (err) {
+        // バックアップ：API制限などで落ちた場合は直接固定パスを読み込む
+        const today = new Date().toISOString().split('T')[0];
+        const fallbackUrl = `./src/posts/${today}-auto-article.md`;
+        container.innerHTML = `
+          <li class="article-item">
+            <a class="article-link" onclick="loadArticle('${fallbackUrl}')">最新技術ハック・トラブルシューティング（最新）</a>
+          </li>`;
+      }
+    }
+
+    async function loadArticle(url) {
+      try {
+        const response = await fetch(url);
         if (!response.ok) throw new Error("File not found");
         const markdownText = await response.text();
         
-        // Frontmatter（先頭の---で囲まれた部分）を除去してMarkdown変換
+        // Frontmatter（先頭の---）を除去して表示
         const cleanMarkdown = markdownText.replace(/^---[\s\S]*?---/, '');
         document.getElementById('article-view').innerHTML = marked.parse(cleanMarkdown);
         
@@ -94,6 +141,8 @@
       document.getElementById('article-view').style.display = 'none';
       document.getElementById('back-btn').style.display = 'none';
     }
+
+    init();
   </script>
 </body>
 </html>
