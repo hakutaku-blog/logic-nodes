@@ -36,13 +36,11 @@ jobs:
           from datetime import datetime
           from google import genai
 
-          # 環境変数からAPIキーを確認
           api_key = os.environ.get("GEMINI_API_KEY")
           if not api_key:
               print("ERROR: GEMINI_API_KEY is not set.")
               sys.exit(1)
 
-          # google-genai SDK の正しい初期化
           client = genai.Client()
           today = datetime.now().strftime("%Y-%m-%d")
 
@@ -59,8 +57,9 @@ jobs:
           - 導入、問題の背景、解決策、まとめの構成にすること
           """
 
+          # 実在する標準モデル gemini-1.5-flash に指定を変更
           response = client.models.generate_content(
-              model='gemini-2.5-flash',
+              model='gemini-1.5-flash',
               contents=prompt,
           )
 
