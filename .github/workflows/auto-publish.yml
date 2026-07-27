@@ -100,7 +100,7 @@ jobs:
 
           print(f"Successfully generated article: {filename}")
 
-          # index.html の自動更新
+          # index.html の自動更新（スクリプト側で直接上書き生成します）
           index_html_content = '''<!DOCTYPE html>
           <html lang="ja">
           <head>
