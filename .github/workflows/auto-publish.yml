@@ -43,7 +43,7 @@ jobs:
               print("ERROR: GEMINI_API_KEY is not set.")
               sys.exit(1)
 
-          client = genai.Client()
+          client = genai.Client(api_key=api_key)
           today = datetime.now().strftime("%Y-%m-%d")
 
           prompt = f"""
@@ -69,36 +69,25 @@ jobs:
           （ここに本文を記述。具体的コード例や設定例を必ず含めること）
           """
 
-          # 動作実績のある最新モデル群（軽量・高上限モデルを優先）
-          candidate_models = [
-              'gemini-2.0-flash-lite',
-              'gemini-1.5-flash-8b',
-              'gemini-2.0-flash',
-          ]
-
+          model_name = 'gemini-2.0-flash'
           response = None
-          used_model = None
 
-          for m in candidate_models:
-              print(f"Trying model {m}...")
-              for attempt in range(3): # 429対策のリトライ処理（最大3回）
-                  try:
-                      response = client.models.generate_content(model=m, contents=prompt)
-                      used_model = m
-                      break
-                  except Exception as e:
-                      err_msg = str(e)
-                      if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                          print(f"Quota error on {m}, waiting 10s... (Attempt {attempt+1}/3)")
-                          time.sleep(10)
-                      else:
-                          print(f"Model {m} failed: {err_msg}")
-                          break
-              if response:
+          print(f"Generating content using model: {model_name}...")
+          for attempt in range(3):
+              try:
+                  response = client.models.generate_content(model=model_name, contents=prompt)
                   break
+              except Exception as e:
+                  err_msg = str(e)
+                  if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                      print(f"Quota error. Waiting 15s before retry... (Attempt {attempt+1}/3)")
+                      time.sleep(15)
+                  else:
+                      print(f"Error: {err_msg}")
+                      break
 
           if not response or not response.text:
-              print("CRITICAL ERROR: Failed to generate article with all candidates.")
+              print("CRITICAL ERROR: Failed to generate article.")
               sys.exit(1)
 
           # 記事の保存
@@ -107,9 +96,9 @@ jobs:
           with open(filename, "w", encoding="utf-8") as f:
               f.write(response.text)
 
-          print(f"Successfully generated article using [{used_model}]: {filename}")
+          print(f"Successfully generated article: {filename}")
 
-          # index.html の自動更新
+          # index.html の自動更新（プロクオリティビューアー）
           index_html_content = '''<!DOCTYPE html>
           <html lang="ja">
           <head>
