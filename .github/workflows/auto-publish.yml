@@ -45,19 +45,26 @@ jobs:
           today = datetime.now().strftime("%Y-%m-%d")
 
           prompt = f"""
-          あなたは「Logic-Nodes」のAI技術ライターです。
+          あなたは技術ブログ「Logic-Nodes」の最高峰AIシニアライターです。
           本日の日付: {today}
 
-          エンジニア向けに、最新のAIツール（Cursor, MCP, LLM API等）やインフラ・CI/CDに関する
-          「現場で役に立つ地雷回避・実践ハック」をテーマにしたMarkdown形式の技術記事を執筆してください。
+          現役エンジニアに向けて、最新のAIツール（Cursor, MCP, LLM API等）やインフラ・CI/CDに関する
+          「現場で直面する地雷の回避策・実践的コードハック」をテーマにした高品質なMarkdown記事を執筆してください。
+
+          【厳格な執筆ルール・制約事項】
+          1. 誤字・脱字・不自然な日本語表現を徹底的に自己校正すること。
+          2. 実在しない公式X（旧Twitter）、SNSアカウント、メルマガ等の宣伝・リンク・誘導文は一切記載しないこと。
+          3. 記事の終わりは解説のまとめで簡潔に締めくくり、余計な挨拶やSNSシェアの呼びかけは含めないこと。
+          4. 読者が即座にコピペ・実行できる具体的なコードブロック（YAML, Python, Bash等）と設定例を必ず含めること。
 
           【構成要件】
-          - Frontmatter（title, date, tagsなど）を先頭に含めること
-          - 読者がすぐに試せる具体的な設定例やコードブロックを含めること
-          - 導入、問題の背景、解決策、まとめの構成にすること
+          - 冒頭にFrontmatter（title, date, tags）を含める
+          - 導入（何が起きているか）
+          - 原因と技術的背景
+          - 解決策・具体的なコード／設定手順
+          - まとめ
           """
 
-          # 優先モデルのリスト（最新の2.5-flashから順にテスト）
           candidate_models = [
               'gemini-2.5-flash',
               'gemini-2.0-flash',
@@ -67,7 +74,6 @@ jobs:
           response = None
           used_model = None
 
-          # まず優先リストで生成を試行
           for m in candidate_models:
               try:
                   print(f"Trying model: {m}...")
@@ -81,7 +87,6 @@ jobs:
               except Exception as e:
                   print(f"Model {m} failed: {e}")
 
-          # もし優先リストが全滅した場合、アカウントで利用可能な全モデルを自動検出してフォールバック
           if not response:
               print("Fallback: Searching available models dynamically...")
               try:
