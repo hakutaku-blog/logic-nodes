@@ -73,15 +73,17 @@ jobs:
           response = None
 
           print(f"Generating content using model: {model_name}...")
-          for attempt in range(3):
+          # クォータ回復待ちを含めた最大5回のリトライ（60秒間隔）
+          for attempt in range(5):
               try:
                   response = client.models.generate_content(model=model_name, contents=prompt)
+                  print("Generation SUCCESS!")
                   break
               except Exception as e:
                   err_msg = str(e)
                   if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                      print(f"Quota error. Waiting 15s before retry... (Attempt {attempt+1}/3)")
-                      time.sleep(15)
+                      print(f"Quota limit hit. Waiting 60s for reset... (Attempt {attempt+1}/5)")
+                      time.sleep(60)
                   else:
                       print(f"Error: {err_msg}")
                       break
@@ -98,7 +100,7 @@ jobs:
 
           print(f"Successfully generated article: {filename}")
 
-          # index.html の自動更新（プロクオリティビューアー）
+          # index.html の自動更新
           index_html_content = '''<!DOCTYPE html>
           <html lang="ja">
           <head>
