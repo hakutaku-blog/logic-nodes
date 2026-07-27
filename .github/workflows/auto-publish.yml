@@ -57,9 +57,9 @@ jobs:
           - 導入、問題の背景、解決策、まとめの構成にすること
           """
 
-          # 実在する標準モデル gemini-1.5-flash に指定を変更
+          # フルパス表記 (models/gemini-1.5-flash) で呼び出し
           response = client.models.generate_content(
-              model='gemini-1.5-flash',
+              model='models/gemini-1.5-flash',
               contents=prompt,
           )
 
