@@ -2,22 +2,98 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logic-Nodes</title>
+  <!-- Markdownをキレイに変換・装飾するライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css">
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
-    h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 10px 0; }
-    a { color: #0066cc; text-decoration: none; font-weight: bold; }
-    a:hover { text-decoration: underline; }
+    body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 45px 20px;
+    }
+    .header {
+      border-bottom: 1px solid #e1e4e8;
+      padding-bottom: 15px;
+      margin-bottom: 30px;
+    }
+    .article-list {
+      list-style: none;
+      padding: 0;
+    }
+    .article-item {
+      margin-bottom: 15px;
+    }
+    .article-link {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0366d6;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .article-link:hover {
+      text-decoration: underline;
+    }
+    #back-btn {
+      display: none;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: #2ea44f;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
-<body>
-  <h1>Logic-Nodes</h1>
-  <p>自動生成された最新技術記事一覧</p>
-  <ul>
-    <!-- ここに直近の記事へのリンクを追加 -->
-    <li><a href="src/posts/2026-07-28-auto-article.md">2026-07-28: 最新技術記事</a></li>
-  </ul>
+<body class="markdown-body">
+  <div class="header">
+    <h1>Logic-Nodes</h1>
+    <p>最新の技術ナレッジ・地雷回避ガイド</p>
+  </div>
+
+  <button id="back-btn" onclick="showList()">← 記事一覧に戻る</button>
+
+  <div id="list-view">
+    <ul class="article-list">
+      <li class="article-item">
+        <a class="article-link" onclick="loadArticle('src/posts/2026-07-28-auto-article.md')">
+          2026-07-28: 最新技術ハック・トラブルシューティング
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div id="article-view" style="display: none;"></div>
+
+  <script>
+    async function loadArticle(filePath) {
+      try {
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error("File not found");
+        const markdownText = await response.text();
+        
+        // Frontmatter（先頭の---で囲まれた部分）を除去してMarkdown変換
+        const cleanMarkdown = markdownText.replace(/^---[\s\S]*?---/, '');
+        document.getElementById('article-view').innerHTML = marked.parse(cleanMarkdown);
+        
+        document.getElementById('list-view').style.display = 'none';
+        document.getElementById('article-view').style.display = 'block';
+        document.getElementById('back-btn').style.display = 'inline-block';
+      } catch (err) {
+        alert("記事の読み込みに失敗しました: " + err.message);
+      }
+    }
+
+    function showList() {
+      document.getElementById('list-view').style.display = 'block';
+      document.getElementById('article-view').style.display = 'none';
+      document.getElementById('back-btn').style.display = 'none';
+    }
+  </script>
 </body>
 </html>
