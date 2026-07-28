@@ -42,13 +42,50 @@ def update_posts_manifest(output_dir="src/posts"):
         json.dump(md_files, f, ensure_ascii=False, indent=2)
     print(f"Updated {manifest_path} with {len(md_files)} posts.")
 
+def update_sitemap_xml(output_dir="src/posts"):
+    """sitemap.xml を自動生成・更新する"""
+    base_url = "https://hakutaku-blog.github.io/logic-nodes/"
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    md_files = [os.path.basename(f) for f in glob.glob(os.path.join(output_dir, "*.md")) if f.endswith(".md")]
+    md_files.sort(reverse=True)
+    
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        '  <url>',
+        f'    <loc>{base_url}</loc>',
+        f'    <lastmod>{today_str}</lastmod>',
+        '    <changefreq>daily</changefreq>',
+        '    <priority>1.0</priority>',
+        '  </url>'
+    ]
+    
+    for fname in md_files:
+        date_str = fname[:10] if len(fname) >= 10 and fname[:4].isdigit() else today_str
+        xml_lines.extend([
+            '  <url>',
+            f'    <loc>{base_url}src/posts/{fname}</loc>',
+            f'    <lastmod>{date_str}</lastmod>',
+            '    <changefreq>weekly</changefreq>',
+            '    <priority>0.8</priority>',
+            '  </url>'
+        ])
+        
+    xml_lines.append('</urlset>')
+    
+    sitemap_path = "sitemap.xml"
+    with open(sitemap_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(xml_lines) + "\n")
+    print(f"Updated {sitemap_path} with {len(md_files)} URLs.")
+
 def main():
     today_str = datetime.now().strftime("%Y-%m-%d")
     output_dir = "src/posts"
     os.makedirs(output_dir, exist_ok=True)
     
-    # マニフェストの最新化を常に実行
+    # マニフェストとsitemapの最新化を常に実行
     update_posts_manifest(output_dir)
+    update_sitemap_xml(output_dir)
     
     # 1. 二重実行ガード
     existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
@@ -94,6 +131,7 @@ def main():
             f.write(content)
             
         update_posts_manifest(output_dir)
+        update_sitemap_xml(output_dir)
         
         # 取得したトレンドもDiscordにチラ見せする
         msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}\n\n【収集したトレンド】\n{latest_trends}"

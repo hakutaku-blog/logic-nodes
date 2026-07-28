@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hakutaku-blog.github.io/logic-nodes/sitemap.xml

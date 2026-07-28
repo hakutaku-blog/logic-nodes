@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logic-Nodes | Auto Tech Blog</title>
     <meta name="description" content="AI-Driven Autonomous Technical Knowledge Base and Tech Blog">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://hakutaku-blog.github.io/logic-nodes/">
+    
+    <!-- Open Graph (OGP) Meta Tags for Social & SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Logic-Nodes | Auto Tech Blog">
+    <meta property="og:description" content="AI-Driven Autonomous Technical Knowledge Base and Tech Blog">
+    <meta property="og:url" content="https://hakutaku-blog.github.io/logic-nodes/">
+    <meta property="og:site_name" content="Logic-Nodes">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Google Search Console (GSC) 所有権確認用メタタグ（必要な場合コメント解除してIDをセット） -->
+    <!-- <meta name="google-site-verification" content="YOUR_GSC_VERIFICATION_TOKEN" /> -->
+
+    <!-- Google Analytics 4 (GA4) アクセス解析タグ -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      // ユーザー様のGA4測定ID (例: G-XXXXXXXXXX)
+      window.GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+      if (window.GA_MEASUREMENT_ID && window.GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
+        gtag('config', window.GA_MEASUREMENT_ID);
+      }
+    </script>
+
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -548,6 +576,15 @@
 
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
+
+            // GA4 記事閲覧イベント送信
+            if (typeof gtag === 'function' && window.GA_MEASUREMENT_ID && window.GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
+                gtag('event', 'select_content', {
+                    content_type: 'article',
+                    item_id: post.filename,
+                    title: post.title
+                });
+            }
         }
 
         function closeModal() {
