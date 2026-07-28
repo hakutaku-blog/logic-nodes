@@ -11,37 +11,34 @@
 
 ## 2. 今後の展望 & アクションプラン
 
-### 🎯 課題1: 検索エンジン最適化（SEO）とインデックス確認
+### 🎯 課題1: 検索エンジン最適化（SEO）とインデックス確認 【ステータス: 完了】
 > **「そもそもこのサイトは検索エンジン（Google等）で見えているか？」**
 
-* **現状:** デフォルトの GitHub Pages URL (`https://hakutaku-blog.github.io/logic-nodes/`)。
-* **対応策・実装案:**
-  1. `robots.txt` および `sitemap.xml` の自動生成仕組みを構築。
-  2. **Google Search Console (GSC)** へのサイト登録・所有権確認。
-  3. `site:hakutaku-blog.github.io/logic-nodes/` でのインデックス状況の追跡。
-  4. 記事ごとの動的 OGP / SEO メタタグ（Title, Description）の最適化。
+* **実施済み対応:**
+  1. `robots.txt` および `sitemap.xml` の自動生成仕組みを `generate.py` に組み込み完了。
+  2. **Google Search Console (GSC)** 所有権認証（`googlea94bd98fb2babc4a.html`）および `sitemap.xml` 登録完了。
+  3. `index.html` への OGP / カノニカルメタタグ実装完了。
 
 ---
 
-### 📊 課題2: アクセス解析（PV数・プレビュー数）の把握
+### 📊 課題2: アクセス解析（PV数・プレビュー数）の把握 【ステータス: 完了】
 > **「どれだけの人がサイトを訪れているか（PV数）の可視化」**
 
-* **対応策・実装案:**
-  1. **Google Analytics 4 (GA4)** トラッキングコード（`gtag.js`）の `index.html` への導入。
-  2. （選択肢2）軽量・プライバシー配慮型の **Cloudflare Web Analytics** や **Umami** の導入。
-  3. 日次・月次のPV数推移を確認できるダッシュボード環境の整頓。
+* **実施済み対応:**
+  1. **Google Analytics 4 (GA4)** 測定ID（`G-W36F6F9RV9`）を `index.html` へ組み込み完了。
+  2. リアルタイムアクセスおよび記事クリックイベント計測のライブ動作検証完了（ユーザー数1計測確認済み）。
 
 ---
 
-### 💰 課題3: Google AdSense（広告収入）の実装
+### 💰 課題3: Google AdSense（広告収入）の実装 【ステータス: 未着手（次フェーズ）】
 > **「広告を掲載し、自動的に広告収益を得る仕組みの構築」**
 
 * **対応策・審査通過に向けた準備:**
-  1. **審査通過用コンテンツの整備:**
+  1. **審査通過用ページの整備:**
      - プライバシーポリシーページ（`privacy.html`）の追加（AdSense審査必須要件）。
      - 運営者情報・お問い合わせフォーム（`about.html`）の設置。
   2. **ドメイン検討:**
-     - ※`github.io` サブドメインのまま審査が通らない場合、独自ドメイン（例: `.com` / `.dev` など年間数0円〜1000円程度）の取得・接続を検討。
+     - ※`github.io` サブドメインのまま審査が通らない場合、独自ドメイン（例: `.com` / `.dev` など年間1000円程度）の取得・接続を検討。
   3. **AdSense広告コードの挿入:**
      - `index.html` の記事上部・記事下部・サイドバー等への自動広告スクリプト配置。
 
@@ -50,5 +47,5 @@
 ## 3. 完了済みシステム構成
 * **自動執筆・配信:** GitHub Actions (`auto-publish.yml`) ＋ Gemini API (`generate.py`, `gemini_api.py`)
 * **一次情報取得:** Hacker News API から最新海外テックトレンドの自動巡回 (`fetch_tech_trends`)
-* **フロントエンド:** Vanilla HTML/CSS/JS ＋ Marked.js (`index.html`)
-* **静的配信構成:** `.nojekyll` 設置済み ＋ `src/posts/posts.json` マニフェスト管理
+* **SEO・配信構造:** `sitemap.xml` / `robots.txt` 自動更新 ＋ `.nojekyll` ＋ `posts.json` マニフェスト管理
+* **アクセス解析:** Google Analytics 4 (GA4: `G-W36F6F9RV9`) 実装済み
