@@ -79,7 +79,8 @@ def main():
 
     【出力ルール（重要）】
     1. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含めてください。
-    2. 注意: 最先頭行は直接 `---` で開始してください。```yaml や ```markdown などのコードブロックでFrontmatterを囲んではいけません。
+    2. date には必ず本日の日付 "{today_str}" を YYYY-MM-DD 形式で指定してください（架空の日付は禁止）。
+    3. 注意: 最先頭行は直接 `---` で開始してください。```yaml や ```markdown などのコードブロックでFrontmatterを囲んではいけません。
     """
 
     # 5. 記事の生成（フォールバック付き）と保存
