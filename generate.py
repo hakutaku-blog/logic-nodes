@@ -145,8 +145,16 @@ def main():
         update_posts_manifest(output_dir)
         update_sitemap_xml(output_dir)
         
-        # 取得したトレンドもDiscordにチラ見せする
-        msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}\n\n【収集したトレンド】\n{latest_trends}"
+        # 記事タイトルのパース
+        import re
+        title_match = re.search(r'title:\s*["\']?(.*?)["\']?\r?$', content, re.MULTILINE)
+        article_title = title_match.group(1) if title_match else filename
+
+        msg = f"📝 **本日更新の記事:**\n「{article_title}」\n\n" \
+              f"🤖 **使用モデル:** {used_model}\n" \
+              f"📁 **保存先:** `{filepath}`\n\n" \
+              f"【収集したトレンド】\n{latest_trends}"
+        
         print(msg)
         send_discord_notify(msg, is_error=False)
 
