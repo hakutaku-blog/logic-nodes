@@ -329,6 +329,18 @@
         let allPosts = [];
         let activeTag = 'ALL';
 
+        // 基準となる src/posts/ ディレクトリの絶対URLを取得
+        function getPostsBaseUrl() {
+            let path = window.location.pathname;
+            if (path.endsWith('.html')) {
+                path = path.substring(0, path.lastIndexOf('/'));
+            }
+            if (!path.endsWith('/')) {
+                path += '/';
+            }
+            return window.location.origin + path + 'src/posts/';
+        }
+
         // YAML Frontmatter をパースする関数
         function parseFrontmatter(text) {
             const pattern = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]*([\s\S]*)$/;
@@ -371,12 +383,13 @@
         // ./src/posts/ 配下の Markdown 記事を取得（外部API制限なし）
         async function fetchPosts() {
             const container = document.getElementById('postsContainer');
+            const baseUrl = getPostsBaseUrl();
             try {
                 let filenames = [];
                 
-                // 1. 静的マニフェストファイル (./src/posts/posts.json) から読み込み
+                // 1. 静的マニフェストファイル (src/posts/posts.json) から読み込み
                 try {
-                    const res = await fetch('./src/posts/posts.json');
+                    const res = await fetch(baseUrl + 'posts.json');
                     if (res.ok) {
                         filenames = await res.json();
                     }
@@ -384,10 +397,10 @@
                     console.warn('posts.json load fallback:', e);
                 }
 
-                // 2. フォールバック: GitHub API (開発用・静的ファイル未構築時)
+                // 2. フォールバック: GitHub API (マニフェスト未構築時などの補助)
                 if (!filenames || filenames.length === 0) {
                     try {
-                        const repoPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+                        let repoPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
                         const apiUrl = `https://api.github.com/repos${repoPath}/contents/src/posts`;
                         const apiRes = await fetch(apiUrl);
                         if (apiRes.ok) {
@@ -409,7 +422,7 @@
                 for (const fname of filenames) {
                     if (typeof fname !== 'string' || !fname.endsWith('.md')) continue;
                     try {
-                        const res = await fetch(`./src/posts/${fname}`);
+                        const res = await fetch(baseUrl + fname);
                         if (res.ok) {
                             const rawText = await res.text();
                             const { metadata, content } = parseFrontmatter(rawText);
