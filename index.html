@@ -341,19 +341,34 @@
             return window.location.origin + path + 'src/posts/';
         }
 
-        // YAML Frontmatter をパースする関数
+        // YAML Frontmatter をパースする関数 (コードブロック囲み等も耐性向上)
         function parseFrontmatter(text) {
+            let cleanedText = text.trim();
+            
+            // AI生成時の ```yaml 囲みを事前トリミング
+            if (cleanedText.startsWith('```yaml')) {
+                cleanedText = cleanedText.replace(/^```yaml\s*/, '');
+            } else if (cleanedText.startsWith('```markdown')) {
+                cleanedText = cleanedText.replace(/^```markdown\s*/, '');
+            } else if (cleanedText.startsWith('```')) {
+                cleanedText = cleanedText.replace(/^```\s*/, '');
+            }
+
             const pattern = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]*([\s\S]*)$/;
-            const match = text.match(pattern);
+            const match = cleanedText.match(pattern);
             
             if (!match) {
                 return { metadata: {}, content: text };
             }
 
             const yamlText = match[1];
-            const content = match[2];
-            const metadata = {};
+            let content = match[2].trim();
 
+            if (content.endsWith('```')) {
+                content = content.slice(0, -3).trim();
+            }
+
+            const metadata = {};
             const yamlLines = yamlText.split(/\r?\n/);
             yamlLines.forEach(line => {
                 const colonIndex = line.indexOf(':');
@@ -415,7 +430,7 @@
                 // 3. 既知ファイル直接フォールバック
                 if (!filenames || filenames.length === 0) {
                     const todayStr = new Date().toISOString().split('T')[0];
-                    filenames = ['2026-07-27-auto-article.md', `${todayStr}-auto-generated.md`];
+                    filenames = ['2026-07-28-auto-generated.md', '2026-07-27-auto-article.md', `${todayStr}-auto-generated.md`];
                 }
 
                 allPosts = [];

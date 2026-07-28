@@ -1,11 +1,10 @@
-```yaml
 ---
 title: "マイクロサービスの罠とDR対策：Cursor×MCP×オープン重みモデルで構築する次世代の高可搬・高信頼システム"
 date: "2025-02-15"
 tags: ["DevOps", "Microservices", "Cursor", "MCP", "AI", "Frontend", "DisasterRecovery"]
 description: "「マイクロサービスは本当に必要か？」という本質的問合せから、大規模災害（DR）に耐えうるシステム構成、そして機密情報を守りながらCursorとMCP（Model Context Protocol）＋オープン重みLLMで開発を劇的に効率化する実践ガイド。"
 ---
-```
+
 
 こんにちは。フロントエンドからDevOps、AIツールを活用した開発プロセスの改善までを追求している技術ブロガーです。
 
