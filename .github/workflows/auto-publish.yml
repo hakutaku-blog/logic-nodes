@@ -318,6 +318,12 @@ jobs:
           EOF
           python generate.py
 
+      - name: Run script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python generate.py
+        
       - name: Commit and Push generated article
         run: |
           git config --global user.name "github-actions[bot]"
@@ -325,3 +331,4 @@ jobs:
           git add .
           git commit -m "chore: auto-generate daily article and update layout [skip ci]" || exit 0
           git push
+      
