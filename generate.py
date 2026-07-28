@@ -150,7 +150,16 @@ def main():
         title_match = re.search(r'title:\s*["\']?(.*?)["\']?\r?$', content, re.MULTILINE)
         article_title = title_match.group(1) if title_match else filename
 
+        # GA4昨日のアクセス統計取得
+        from analytics import fetch_yesterday_ga4_stats
+        ga4_stats = fetch_yesterday_ga4_stats()
+        if ga4_stats is not None:
+            stats_str = f"📊 **昨日のアクセス実績:**\n・ページビュー (PV): **{ga4_stats['page_views']}** PV\n・訪問ユーザー数: **{ga4_stats['active_users']}** 人\n"
+        else:
+            stats_str = "📊 **昨日のアクセス実績:** （GA4 APIデータ取得中）\n"
+
         msg = f"📝 **本日更新の記事:**\n「{article_title}」\n\n" \
+              f"{stats_str}\n" \
               f"🤖 **使用モデル:** {used_model}\n" \
               f"📁 **保存先:** `{filepath}`\n\n" \
               f"【収集したトレンド】\n{latest_trends}"
