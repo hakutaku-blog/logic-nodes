@@ -395,16 +395,17 @@
             return { metadata, content };
         }
 
-        // ./src/posts/ 配下の Markdown 記事を取得（外部API制限なし）
+        // ./src/posts/ 配下の Markdown 記事を取得（外部API制限なし・ブラウザキャッシュ無効化）
         async function fetchPosts() {
             const container = document.getElementById('postsContainer');
             const baseUrl = getPostsBaseUrl();
+            const cacheBust = '?_t=' + Date.now();
             try {
                 let filenames = [];
                 
                 // 1. 静的マニフェストファイル (src/posts/posts.json) から読み込み
                 try {
-                    const res = await fetch(baseUrl + 'posts.json');
+                    const res = await fetch(baseUrl + 'posts.json' + cacheBust, { cache: 'no-store' });
                     if (res.ok) {
                         filenames = await res.json();
                     }
@@ -417,7 +418,7 @@
                     try {
                         let repoPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
                         const apiUrl = `https://api.github.com/repos${repoPath}/contents/src/posts`;
-                        const apiRes = await fetch(apiUrl);
+                        const apiRes = await fetch(apiUrl, { cache: 'no-store' });
                         if (apiRes.ok) {
                             const files = await apiRes.json();
                             filenames = files
@@ -437,7 +438,7 @@
                 for (const fname of filenames) {
                     if (typeof fname !== 'string' || !fname.endsWith('.md')) continue;
                     try {
-                        const res = await fetch(baseUrl + fname);
+                        const res = await fetch(baseUrl + fname + cacheBust, { cache: 'no-store' });
                         if (res.ok) {
                             const rawText = await res.text();
                             const { metadata, content } = parseFrontmatter(rawText);
