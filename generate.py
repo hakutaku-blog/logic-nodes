@@ -3,8 +3,6 @@ import sys
 import json
 import urllib.request
 from google import genai
-from datetime import datetime
-import glob
 
 def send_discord_notify(message, is_error=False):
     """Discordへ通知を送信する関数"""
@@ -16,7 +14,7 @@ def send_discord_notify(message, is_error=False):
     color = 16711680 if is_error else 65280
     payload = {
         "embeds": [{
-            "title": "❌ ブログ自動更新エラー" if is_error else "✅ ブログ自動更新完了",
+            "title": "🔍 APIモデル調査ツール",
             "description": message,
             "color": color
         }]
@@ -24,7 +22,6 @@ def send_discord_notify(message, is_error=False):
     
     req = urllib.request.Request(webhook_url, method="POST")
     req.add_header('Content-Type', 'application/json')
-    # 【403エラー対策】Discordに弾かれないようUser-Agentを追加
     req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) logic-nodes/1.0')
     
     try:
@@ -33,46 +30,43 @@ def send_discord_notify(message, is_error=False):
         print(f"Discord通知失敗: {e}")
 
 def main():
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    existing_files = glob.glob(f"*{today_str}*.md")
-    
-    if existing_files:
-        msg = f"本日の記事は既に生成されています（{existing_files[0]}）。処理を安全にスキップしました。"
-        print(msg)
-        send_discord_notify(msg, is_error=False)
-        sys.exit(0)
-
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        msg = "GEMINI_API_KEYが設定されていません。"
-        send_discord_notify(msg, is_error=True)
+        print("GEMINI_API_KEYが設定されていません。")
         sys.exit(1)
 
-    prompt = """
-    フロントエンド、DevOps、AIエディタ（CursorやMCP等）に関する最新の技術ブログ記事をMarkdown形式で1つ作成してください。
-    YAML Frontmatter（title, date, tags, description）を含めてください。
-    """
-
     try:
-        print("Generating content using model: gemini-1.5-flash...")
+        print("Fetching available models from Google API...")
         client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt,
-        )
-        content = response.text
-
-        filename = f"{today_str}-auto-generated.md"
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
         
-        msg = f"記事の生成に成功しました！\nファイル名: {filename}"
+        # APIキーに紐づく利用可能なモデルをすべて取得する
+        available_models = []
+        for m in client.models.list_models():
+            available_models.append(m.name)
+        
+        if not available_models:
+            msg = "利用可能なモデルが1つも見つかりませんでした。APIキーの無料枠自体が完全に封鎖されています。"
+            print(msg)
+            send_discord_notify(msg, is_error=True)
+            sys.exit(1)
+        
+        # 取得したモデル一覧を整形してDiscordへ通知
+        model_list_str = "\n".join(available_models)
+        
+        # Discordの文字数制限対策
+        if len(model_list_str) > 1900:
+            model_list_str = model_list_str[:1900] + "\n... (省略)"
+            
+        msg = f"現在のAPIキーで利用可能なモデル一覧:\n```text\n{model_list_str}\n```\nこのリスト内にある名前が、確実に使用可能なモデルです。"
         print(msg)
         send_discord_notify(msg, is_error=False)
+        
+        # 調査目的のため、記事生成は行わずここで正常終了させる
+        sys.exit(0)
 
     except Exception as e:
         error_msg = str(e)
-        msg = f"API実行中にエラーが発生しました。\n詳細: {error_msg}"
+        msg = f"モデル一覧の取得中にエラーが発生しました。\n詳細: {error_msg}"
         print(msg)
         send_discord_notify(msg, is_error=True)
         sys.exit(1)
