@@ -54,11 +54,11 @@ def main():
     """
 
     try:
-        print("Generating content using model: gemini-2.0-flash...")
+        print("Generating content using model: gemini-2.5-flash...")
         # 【警告対策】最新の google-genai SDK の記述方式に変更
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
         )
         content = response.text
