@@ -2,12 +2,14 @@ name: Auto Generate and Publish Blog Post
 
 on:
   schedule:
-    # 毎日 朝7:00 (JST) に自動実行 (UTC 22:00)
+    # 日本時間 朝7:00, 7:30, 8:00 に実行（GitHubの遅延・スキップ対策として冗長化）
     - cron: '0 22 * * *'
-  workflow_dispatch: # 手動即時テスト用
+    - cron: '30 22 * * *'
+    - cron: '0 23 * * *'
+  workflow_dispatch: # 手動実行用トリガー
 
 jobs:
-  build-and-publish:
+  generate-and-publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,311 +21,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install google-genai pyyaml
-
-      - name: Generate Article and Update Site
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          cat << 'EOF' > generate.py
-          import os
-          import sys
-          import json
-          import time
-          from datetime import datetime
-          from google import genai
-
-          api_key = os.environ.get("GEMINI_API_KEY")
-          if not api_key:
-              print("ERROR: GEMINI_API_KEY is not set.")
-              sys.exit(1)
-
-          client = genai.Client(api_key=api_key)
-          today = datetime.now().strftime("%Y-%m-%d")
-
-          prompt = f"""
-          あなたは技術ブログ「Logic-Nodes」の最高峰AIシニアライターです。
-          本日の日付: {today}
-
-          現役エンジニアに向けて、最新のAIツール（Cursor, MCP, LLM API等）やインフラ・CI/CDに関する
-          「現場で直面する地雷の回避策・実践的コードハック」をテーマにした高品質なMarkdown記事を執筆してください。
-
-          【絶対禁止事項】
-          - 「コメント欄で教えてください」「SNSでシェアしてください」などの存在しない機能・アカウントへの言及は一切禁止。
-          - 不要な挨拶（「こんにちは」等）は除外し、導入から技術的本質に入ること。
-
-          【出力フォーマット】
-          必ず冒頭に以下のYAML Frontmatterを含めてください。
-          ---
-          title: "記事の具体的なタイトル（技術名や解決策を含む魅力的なタイトル）"
-          date: "{today}"
-          tags: ["Cursor", "MCP", "DevOps"]
-          description: "記事の簡潔な概要（100文字程度）"
-          ---
-
-          （ここに本文を記述。具体的コード例や設定例を必ず含めること）
-          """
-
-          model_name = 'gemini-2.0-flash'
-          response = None
-
-          print(f"Generating content using model: {model_name}...")
-          # クォータ回復待ちを含めた最大5回のリトライ（60秒間隔）
-          for attempt in range(5):
-              try:
-                  response = client.models.generate_content(model=model_name, contents=prompt)
-                  print("Generation SUCCESS!")
-                  break
-              except Exception as e:
-                  err_msg = str(e)
-                  if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                      print(f"Quota limit hit. Waiting 60s for reset... (Attempt {attempt+1}/5)")
-                      time.sleep(60)
-                  else:
-                      print(f"Error: {err_msg}")
-                      break
-
-          if not response or not response.text:
-              print("CRITICAL ERROR: Failed to generate article.")
-              sys.exit(1)
-
-          # 記事の保存
-          os.makedirs("src/posts", exist_ok=True)
-          filename = f"src/posts/{today}-auto-article.md"
-          with open(filename, "w", encoding="utf-8") as f:
-              f.write(response.text)
-
-          print(f"Successfully generated article: {filename}")
-
-          # index.html の自動更新（スクリプト側で直接上書き生成します）
-          index_html_content = '''<!DOCTYPE html>
-          <html lang="ja">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Logic-Nodes | 技術メディア</title>
-            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/js-yaml/dist/js-yaml.min.js"></script>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css">
-            <style>
-              body {
-                box-sizing: border-box;
-                min-width: 200px;
-                max-width: 900px;
-                margin: 0 auto;
-                padding: 40px 20px;
-                background-color: #0d1117;
-                color: #c9d1d9;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-              }
-              .site-header {
-                border-bottom: 1px solid #30363d;
-                padding-bottom: 20px;
-                margin-bottom: 30px;
-              }
-              .site-title {
-                font-size: 2rem;
-                font-weight: 800;
-                color: #58a6ff;
-                margin: 0 0 8px 0;
-                text-decoration: none;
-                display: inline-block;
-              }
-              .site-desc {
-                color: #8b949e;
-                margin: 0;
-                font-size: 0.95rem;
-              }
-              .post-card {
-                background: #161b22;
-                border: 1px solid #30363d;
-                border-radius: 8px;
-                padding: 20px;
-                margin-bottom: 16px;
-                transition: border-color 0.2s;
-              }
-              .post-card:hover {
-                border-color: #58a6ff;
-              }
-              .post-title {
-                font-size: 1.25rem;
-                font-weight: 700;
-                color: #58a6ff;
-                text-decoration: none;
-                cursor: pointer;
-                display: block;
-                margin-bottom: 8px;
-              }
-              .post-meta {
-                font-size: 0.85rem;
-                color: #8b949e;
-                margin-bottom: 12px;
-              }
-              .post-desc {
-                font-size: 0.95rem;
-                color: #c9d1d9;
-                margin: 0;
-                line-height: 1.5;
-              }
-              #back-btn {
-                display: none;
-                margin-bottom: 24px;
-                padding: 8px 16px;
-                background: #238636;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-weight: 600;
-              }
-              #back-btn:hover {
-                background: #2ea44f;
-              }
-              .markdown-body {
-                background-color: transparent !important;
-                color: #c9d1d9 !important;
-              }
-              .markdown-body pre {
-                background-color: #161b22 !important;
-                border: 1px solid #30363d;
-              }
-              .article-header {
-                border-bottom: 1px solid #30363d;
-                padding-bottom: 16px;
-                margin-bottom: 24px;
-              }
-              .article-title-main {
-                font-size: 2rem;
-                color: #f0f6fc;
-                margin: 0 0 12px 0;
-              }
-            </style>
-          </head>
-          <body>
-            <header class="site-header">
-              <a href="#" class="site-title" onclick="showList(); return false;">Logic-Nodes</a>
-              <p class="site-desc">現場で使える技術ハック・地雷回避ナレッジベース</p>
-            </header>
-
-            <button id="back-btn" onclick="showList()">← 記事一覧に戻る</button>
-
-            <main id="list-view">
-              <div id="posts-container">読み込み中...</div>
-            </main>
-
-            <article id="article-view" style="display: none;">
-              <div class="article-header">
-                <h1 id="render-title" class="article-title-main"></h1>
-                <div id="render-meta" class="post-meta"></div>
-              </div>
-              <div id="render-content" class="markdown-body"></div>
-            </article>
-
-            <script>
-              async function init() {
-                const container = document.getElementById('posts-container');
-                try {
-                  const repoPath = window.location.pathname.split('/')[1] || 'logic-nodes';
-                  const owner = window.location.hostname.split('.')[0];
-                  const apiUrl = `https://api.github.com/repos/${owner}/${repoPath}/contents/src/posts`;
-                  
-                  const res = await fetch(apiUrl);
-                  if (!res.ok) throw new Error("記事一覧を取得できませんでした");
-                  const files = await res.json();
-                  
-                  const mdFiles = files
-                    .filter(f => f.name.endsWith('.md'))
-                    .sort((a, b) => b.name.localeCompare(a.name));
-
-                  if (mdFiles.length === 0) {
-                    container.innerHTML = '<div class="post-card">記事がありません。</div>';
-                    return;
-                  }
-
-                  container.innerHTML = '';
-                  
-                  for (const file of mdFiles) {
-                    const rawRes = await fetch(file.download_url);
-                    const rawText = await rawRes.text();
-                    
-                    let meta = { title: file.name, date: '', description: '' };
-                    const match = rawText.match(/^---([\s\S]*?)---/);
-                    if (match) {
-                      try {
-                        meta = jsyaml.load(match[1]);
-                      } catch (e) {}
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'post-card';
-                    card.innerHTML = `
-                      <a class="post-title" onclick="loadArticle('${file.download_url}')">${meta.title || file.name}</a>
-                      <div class="post-meta">投稿日: ${meta.date || '未設定'} | タグ: ${(meta.tags || []).join(', ')}</div>
-                      <p class="post-desc">${meta.description || '概要なし'}</p>
-                    `;
-                    container.appendChild(card);
-                  }
-                } catch (err) {
-                  container.innerHTML = `<div class="post-card">読み込みエラー: ${err.message}</div>`;
-                }
-              }
-
-              async function loadArticle(url) {
-                try {
-                  const res = await fetch(url);
-                  const text = await res.text();
-                  
-                  let meta = { title: '無題' };
-                  let body = text;
-
-                  const match = text.match(/^---([\s\S]*?)---/);
-                  if (match) {
-                    try { meta = jsyaml.load(match[1]); } catch (e) {}
-                    body = text.replace(/^---[\s\S]*?---/, '');
-                  }
-
-                  document.getElementById('render-title').textContent = meta.title || '無題';
-                  document.getElementById('render-meta').textContent = `投稿日: ${meta.date || ''} | タグ: ${(meta.tags || []).join(', ')}`;
-                  document.getElementById('render-content').innerHTML = marked.parse(body);
-
-                  document.getElementById('list-view').style.display = 'none';
-                  document.getElementById('article-view').style.display = 'block';
-                  document.getElementById('back-btn').style.display = 'inline-block';
-                  window.scrollTo(0, 0);
-                } catch (err) {
-                  alert("記事の読み込みに失敗しました");
-                }
-              }
-
-              function showList() {
-                document.getElementById('list-view').style.display = 'block';
-                document.getElementById('article-view').style.display = 'none';
-                document.getElementById('back-btn').style.display = 'none';
-              }
-
-              init();
-            </script>
-          </body>
-          </html>'''
-
-          with open("index.html", "w", encoding="utf-8") as f:
-              f.write(index_html_content)
-
-          print("Successfully updated index.html")
-          EOF
-          python generate.py
+          pip install google-generativeai
 
       - name: Run script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python generate.py
-        
+
       - name: Commit and Push generated article
         run: |
           git config --global user.name "github-actions[bot]"
@@ -331,4 +41,3 @@ jobs:
           git add .
           git commit -m "chore: auto-generate daily article and update layout [skip ci]" || exit 0
           git push
-      
