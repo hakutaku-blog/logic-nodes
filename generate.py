@@ -1,21 +1,45 @@
 import os
 import sys
 import glob
+import json
+import urllib.request
 from datetime import datetime
 from notify import send_discord_notify
 from gemini_api import generate_text_with_fallback
 
+def fetch_tech_trends():
+    """海外テックForum（Hacker News）から最新のトップトレンドを自律的に取得する"""
+    trends = []
+    try:
+        print("Fetching latest tech trends from Hacker News...")
+        # Hacker Newsのトップ記事IDを取得
+        url = "https://hacker-news.firebaseio.com/v0/topstories.json"
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req) as response:
+            story_ids = json.loads(response.read().decode('utf-8'))
+            
+        # 上位3件のタイトルを取得してリスト化
+        for sid in story_ids[:3]:
+            story_url = f"https://hacker-news.firebaseio.com/v0/item/{sid}.json"
+            sreq = urllib.request.Request(story_url)
+            with urllib.request.urlopen(sreq) as sres:
+                story = json.loads(sres.read().decode('utf-8'))
+                title = story.get('title', '')
+                if title:
+                    trends.append(f"・{title}")
+    except Exception as e:
+        print(f"トレンド取得失敗: {e}")
+        trends.append("※最新トレンドの取得に失敗しました。一般的な技術テーマで補完してください。")
+        
+    return "\n".join(trends)
+
 def main():
     today_str = datetime.now().strftime("%Y-%m-%d")
-    
-    # 保存先ディレクトリの指定（なければ作成）
     output_dir = "src/posts"
     os.makedirs(output_dir, exist_ok=True)
     
-    # 検索先も src/posts 内に変更
-    existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
-    
     # 1. 二重実行ガード
+    existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
     if existing_files:
         msg = f"本日の記事は既に生成されています（{existing_files[0]}）。処理を安全にスキップしました。"
         print(msg)
@@ -29,23 +53,33 @@ def main():
         send_discord_notify(msg, is_error=True)
         sys.exit(1)
 
-    prompt = """
-    フロントエンド、DevOps、AIエディタ（CursorやMCP等）に関する最新の技術ブログ記事をMarkdown形式で1つ作成してください。
-    YAML Frontmatter（title, date, tags, description）を含めてください。
+    # 3. トレンドの自動巡回・収集（APIを叩く前に実行）
+    latest_trends = fetch_tech_trends()
+
+    # 4. 収集したトレンドをAIに渡す動的プロンプトの構築
+    prompt = f"""
+    あなたは優秀なITエンジニア兼技術ブロガーです。
+    以下の海外テックForumから取得した最新のトレンドトピックをベースに、フロントエンド、DevOps、AIエディタ（CursorやMCP等）に絡めた技術ブログ記事をMarkdown形式で1つ作成してください。
+    現場で需要の高い技術課題や地雷対策などの実践的なテーマとして抽出・執筆してください。
+
+    【本日のトレンドトピック】
+    {latest_trends}
+
+    YAML Frontmatter（title, date, tags, description）を必ず含めてください。
     """
 
-    # 3. 記事の生成（フォールバック付き）と保存
+    # 5. 記事の生成（フォールバック付き）と保存
     try:
         content, used_model = generate_text_with_fallback(api_key, prompt)
 
-        # 保存先パスを src/posts/ 配下に変更
         filename = f"{today_str}-auto-generated.md"
         filepath = os.path.join(output_dir, filename)
         
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         
-        msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}"
+        # 取得したトレンドもDiscordにチラ見せする
+        msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}\n\n【収集したトレンド】\n{latest_trends}"
         print(msg)
         send_discord_notify(msg, is_error=False)
 
