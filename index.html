@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logic-Nodes | Auto Tech Blog</title>
+    <meta name="description" content="AI-Driven Autonomous Technical Knowledge Base and Tech Blog">
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -15,7 +16,9 @@
             --accent: #38bdf8;
             --accent-hover: #0284c7;
             --border: #334155;
-            --tag-bg: #334155;
+            --tag-bg: #1e293b;
+            --tag-active-bg: #38bdf8;
+            --tag-active-text: #0f172a;
         }
 
         body {
@@ -30,21 +33,23 @@
         header {
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border);
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem;
             text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         header h1 {
             margin: 0;
             color: var(--accent);
-            font-size: 2.2rem;
-            letter-spacing: 0.05em;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
         }
 
         header p {
             margin: 0.5rem 0 0;
             color: var(--text-sub);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         .container {
@@ -57,71 +62,82 @@
         .controls {
             background: var(--card-bg);
             padding: 1.5rem;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid var(--border);
             margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
         .search-box {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
+            padding: 0.85rem 1.2rem;
+            border-radius: 8px;
             border: 1px solid var(--border);
             background: var(--bg-color);
             color: var(--text-main);
             font-size: 1rem;
             box-sizing: border-box;
             margin-bottom: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .search-box:focus {
             outline: none;
             border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
         }
 
         .tag-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.6rem;
+            align-items: center;
         }
 
         .tag-btn {
-            background: var(--tag-bg);
+            background: var(--bg-color);
             color: var(--text-sub);
             border: 1px solid var(--border);
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
             font-size: 0.85rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .tag-btn:hover, .tag-btn.active {
-            background: var(--accent);
-            color: #000;
+        .tag-btn:hover {
             border-color: var(--accent);
-            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .tag-btn.active {
+            background: var(--tag-active-bg);
+            color: var(--tag-active-text);
+            border-color: var(--tag-active-bg);
+            font-weight: 700;
         }
 
         /* 記事一覧リスト */
         .post-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
+            border-radius: 12px;
+            padding: 1.8rem;
             margin-bottom: 1.5rem;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .post-card:hover {
             border-color: var(--accent);
             transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.4);
         }
 
         .post-meta {
             font-size: 0.85rem;
             color: var(--text-sub);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.6rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -129,13 +145,14 @@
 
         .post-title {
             margin: 0 0 0.8rem 0;
-            font-size: 1.4rem;
+            font-size: 1.45rem;
+            line-height: 1.4;
         }
 
         .post-title a {
             color: var(--text-main);
             text-decoration: none;
-            transition: color 0.2s;
+            transition: color 0.2s ease;
         }
 
         .post-title a:hover {
@@ -145,21 +162,29 @@
         .post-description {
             color: var(--text-sub);
             font-size: 0.95rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
         }
 
         .post-tags {
             display: flex;
-            gap: 0.4rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .post-tag {
             font-size: 0.75rem;
-            background: var(--bg-color);
+            background: rgba(56, 189, 248, 0.1);
             color: var(--accent);
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            border: 1px solid var(--border);
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .post-tag:hover {
+            background: rgba(56, 189, 248, 0.25);
         }
 
         /* モーダル表示 */
@@ -170,7 +195,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
             overflow-y: auto;
             padding: 2rem 1rem;
             box-sizing: border-box;
@@ -179,48 +205,95 @@
 
         .modal-content {
             background: var(--card-bg);
-            max-width: 800px;
+            max-width: 840px;
             margin: 0 auto;
-            padding: 2rem;
-            border-radius: 8px;
+            padding: 2.5rem;
+            border-radius: 12px;
             border: 1px solid var(--border);
             position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .close-btn {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
+            top: 1.2rem;
+            right: 1.2rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
             color: var(--text-sub);
-            font-size: 1.5rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .close-btn:hover {
-            color: var(--accent);
+            color: var(--text-main);
+            border-color: var(--accent);
+            background: var(--accent-hover);
         }
 
         /* Markdown出力スタイル */
+        .markdown-body {
+            color: var(--text-main);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
         .markdown-body h1, .markdown-body h2, .markdown-body h3 {
             color: var(--accent);
             border-bottom: 1px solid var(--border);
-            padding-bottom: 0.3rem;
+            padding-bottom: 0.4rem;
+            margin-top: 1.8rem;
+        }
+
+        .markdown-body p {
+            margin-bottom: 1.2rem;
         }
 
         .markdown-body code {
             background: var(--bg-color);
+            color: #e2e8f0;
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
-            font-family: monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9em;
         }
 
         .markdown-body pre {
             background: var(--bg-color);
-            padding: 1rem;
-            border-radius: 6px;
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
             overflow-x: auto;
+        }
+
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .markdown-body hr {
+            border: 0;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--text-sub);
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -234,14 +307,14 @@
     <div class="container">
         <!-- 検索・フィルターエリア -->
         <div class="controls">
-            <input type="text" id="searchInput" class="search-box" placeholder="キーワードで記事を検索...">
+            <input type="text" id="searchInput" class="search-box" placeholder="キーワードで記事を検索（タイトル・タグ・概要・本文）...">
             <div class="tag-list" id="tagList">
                 <button class="tag-btn active" data-tag="ALL">ALL</button>
             </div>
         </div>
 
         <!-- 記事一覧リスト -->
-        <div id="postsContainer">Loading knowledge...</div>
+        <div id="postsContainer" class="loading-spinner">記事データを読み込んでいます...</div>
     </div>
 
     <!-- 記事詳細モーダル -->
@@ -258,108 +331,121 @@
 
         // YAML Frontmatter をパースする関数
         function parseFrontmatter(text) {
-            const pattern = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]+([\s\S]*)$/;
+            const pattern = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]*([\s\S]*)$/;
             const match = text.match(pattern);
             
             if (!match) {
                 return { metadata: {}, content: text };
             }
 
-            const yamlLines = match[1].split('\n');
+            const yamlText = match[1];
+            const content = match[2];
             const metadata = {};
 
+            const yamlLines = yamlText.split(/\r?\n/);
             yamlLines.forEach(line => {
-                const [key, ...valueParts] = line.split(':');
-                if (key && valueParts.length > 0) {
-                    let value = valueParts.join(':').trim();
-                    if (value.startsWith('[') && value.endsWith(']')) {
-                        value = value.slice(1, -1).split(',').map(s => s.trim().replace(/^['"]|['"]$/g, ''));
-                    } else {
-                        value = value.replace(/^['"]|['"]$/g, '');
+                const colonIndex = line.indexOf(':');
+                if (colonIndex !== -1) {
+                    const key = line.slice(0, colonIndex).trim();
+                    let value = line.slice(colonIndex + 1).trim();
+                    
+                    if (key) {
+                        if (value.startsWith('[') && value.endsWith(']')) {
+                            try {
+                                metadata[key] = JSON.parse(value);
+                            } catch (e) {
+                                metadata[key] = value.slice(1, -1)
+                                    .split(',')
+                                    .map(s => s.trim().replace(/^['"]|['"]$/g, ''));
+                            }
+                        } else {
+                            metadata[key] = value.replace(/^['"]|['"]$/g, '');
+                        }
                     }
-                    metadata[key.trim()] = value;
                 }
             });
 
-            return { metadata, content: match[2] };
+            return { metadata, content };
         }
 
-        // 相対パスで記事ファイルを取得する（リポジトリ名不問）
+        // ./src/posts/ 配下の Markdown 記事を取得（外部API制限なし）
         async function fetchPosts() {
             const container = document.getElementById('postsContainer');
             try {
-                // ドメイン相対パスで src/posts 配下を取得（GitHub Pages環境対応）
-                const repoPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
-                const apiUrl = `https://api.github.com/repos${repoPath}/contents/src/posts`;
+                let filenames = [];
                 
-                let files = [];
-                const response = await fetch(apiUrl);
-                
-                if (response.ok) {
-                    files = await response.json();
-                } else {
-                    // API上限やアクセス不可時のフォールバック：既知のパス構造から直接フェッチ試行
-                    throw new Error('APIからのリスト取得に失敗しました');
+                // 1. 静的マニフェストファイル (./src/posts/posts.json) から読み込み
+                try {
+                    const res = await fetch('./src/posts/posts.json');
+                    if (res.ok) {
+                        filenames = await res.json();
+                    }
+                } catch (e) {
+                    console.warn('posts.json load fallback:', e);
                 }
 
-                const mdFiles = files.filter(f => f.name.endsWith('.md'));
+                // 2. フォールバック: GitHub API (開発用・静的ファイル未構築時)
+                if (!filenames || filenames.length === 0) {
+                    try {
+                        const repoPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+                        const apiUrl = `https://api.github.com/repos${repoPath}/contents/src/posts`;
+                        const apiRes = await fetch(apiUrl);
+                        if (apiRes.ok) {
+                            const files = await apiRes.json();
+                            filenames = files
+                                .filter(f => f.name.endsWith('.md') && f.name !== 'README.md')
+                                .map(f => f.name);
+                        }
+                    } catch (e) {}
+                }
 
-                allPosts = await Promise.all(mdFiles.map(async (file) => {
-                    const res = await fetch(`./src/posts/${file.name}`);
-                    const rawText = await res.text();
-                    const { metadata, content } = parseFrontmatter(rawText);
+                // 3. 既知ファイル直接フォールバック
+                if (!filenames || filenames.length === 0) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    filenames = ['2026-07-27-auto-article.md', `${todayStr}-auto-generated.md`];
+                }
 
-                    return {
-                        filename: file.name,
-                        title: metadata.title || file.name.replace('.md', ''),
-                        date: metadata.date || 'Unknown Date',
-                        tags: Array.isArray(metadata.tags) ? metadata.tags : (metadata.tags ? [metadata.tags] : []),
-                        description: metadata.description || '概要なし',
-                        content: content
-                    };
-                }));
+                allPosts = [];
+                for (const fname of filenames) {
+                    if (typeof fname !== 'string' || !fname.endsWith('.md')) continue;
+                    try {
+                        const res = await fetch(`./src/posts/${fname}`);
+                        if (res.ok) {
+                            const rawText = await res.text();
+                            const { metadata, content } = parseFrontmatter(rawText);
 
-                // 日付降順（新しい順）にソート
+                            allPosts.push({
+                                filename: fname,
+                                title: metadata.title || fname.replace('.md', ''),
+                                date: metadata.date || fname.slice(0, 10),
+                                tags: Array.isArray(metadata.tags) ? metadata.tags : (metadata.tags ? [metadata.tags] : []),
+                                description: metadata.description || '概要なし',
+                                content: content
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Failed to load post ${fname}:`, err);
+                    }
+                }
+
+                // 重複除去 (filename基準)
+                const uniqueMap = new Map();
+                allPosts.forEach(p => uniqueMap.set(p.filename, p));
+                allPosts = Array.from(uniqueMap.values());
+
+                // 日付降順ソート
                 allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 renderTagButtons();
                 renderPosts();
 
             } catch (err) {
-                // GitHub APIがダメだった場合でも、直近のファイルを直接相対パスで読みに行く最終防衛線
-                try {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    const fallbackFiles = [`${todayStr}-auto-generated.md`];
-                    
-                    allPosts = [];
-                    for (const fileName of fallbackFiles) {
-                        const res = await fetch(`./src/posts/${fileName}`);
-                        if (res.ok) {
-                            const rawText = await res.text();
-                            const { metadata, content } = parseFrontmatter(rawText);
-                            allPosts.push({
-                                filename: fileName,
-                                title: metadata.title || fileName.replace('.md', ''),
-                                date: metadata.date || todayStr,
-                                tags: Array.isArray(metadata.tags) ? metadata.tags : (metadata.tags ? [metadata.tags] : []),
-                                description: metadata.description || '概要なし',
-                                content: content
-                            });
-                        }
-                    }
-
-                    if (allPosts.length > 0) {
-                        renderTagButtons();
-                        renderPosts();
-                        return;
-                    }
-                } catch (e) {}
-
-                container.innerHTML = `<p style="color: #ef4444;">記事を取得できませんでした。リポジトリの配備状況をご確認ください。</p>`;
+                console.error(err);
+                container.innerHTML = `<p style="color: #ef4444;">記事を取得できませんでした。./src/posts/ の配置をご確認ください。</p>`;
             }
         }
 
-        // タグフィルターボタンの動的作成
+        // タグフィルターボタンの動的生成
         function renderTagButtons() {
             const tagListContainer = document.getElementById('tagList');
             const tagsSet = new Set();
@@ -377,17 +463,20 @@
         // 記事一覧のレンダリング
         function renderPosts() {
             const container = document.getElementById('postsContainer');
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
 
             const filteredPosts = allPosts.filter(post => {
                 const matchesTag = activeTag === 'ALL' || post.tags.includes(activeTag);
-                const matchesSearch = post.title.toLowerCase().includes(searchQuery) || 
-                                      post.description.toLowerCase().includes(searchQuery);
+                const matchesSearch = searchQuery === '' || 
+                                      post.title.toLowerCase().includes(searchQuery) || 
+                                      post.description.toLowerCase().includes(searchQuery) ||
+                                      post.content.toLowerCase().includes(searchQuery) ||
+                                      post.tags.some(t => t.toLowerCase().includes(searchQuery));
                 return matchesTag && matchesSearch;
             });
 
             if (filteredPosts.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-sub);">該当する記事が見つかりません。</p>';
+                container.innerHTML = '<p style="color: var(--text-sub); text-align: center; padding: 2rem 0;">該当する記事が見つかりません。</p>';
                 return;
             }
 
@@ -401,7 +490,7 @@
                     </h2>
                     <div class="post-description">${post.description}</div>
                     <div class="post-tags">
-                        ${post.tags.map(t => `<span class="post-tag">#${t}</span>`).join('')}
+                        ${post.tags.map(t => `<span class="post-tag" onclick="filterByTag('${t}'); event.stopPropagation();">#${t}</span>`).join('')}
                     </div>
                 </div>
             `).join('');
@@ -429,10 +518,12 @@
             `;
 
             modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
             document.getElementById('articleModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
         window.onclick = function(event) {

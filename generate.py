@@ -33,10 +33,22 @@ def fetch_tech_trends():
         
     return "\n".join(trends)
 
+def update_posts_manifest(output_dir="src/posts"):
+    """src/posts 配下の Markdown ファイル一覧を posts.json に保存する"""
+    md_files = [os.path.basename(f) for f in glob.glob(os.path.join(output_dir, "*.md")) if f.endswith(".md")]
+    md_files.sort(reverse=True)
+    manifest_path = os.path.join(output_dir, "posts.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(md_files, f, ensure_ascii=False, indent=2)
+    print(f"Updated {manifest_path} with {len(md_files)} posts.")
+
 def main():
     today_str = datetime.now().strftime("%Y-%m-%d")
     output_dir = "src/posts"
     os.makedirs(output_dir, exist_ok=True)
+    
+    # マニフェストの最新化を常に実行
+    update_posts_manifest(output_dir)
     
     # 1. 二重実行ガード
     existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
@@ -77,6 +89,8 @@ def main():
         
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
+            
+        update_posts_manifest(output_dir)
         
         # 取得したトレンドもDiscordにチラ見せする
         msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}\n\n【収集したトレンド】\n{latest_trends}"
@@ -91,3 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
