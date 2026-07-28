@@ -7,7 +7,13 @@ from gemini_api import generate_text_with_fallback
 
 def main():
     today_str = datetime.now().strftime("%Y-%m-%d")
-    existing_files = glob.glob(f"*{today_str}*.md")
+    
+    # 保存先ディレクトリの指定（なければ作成）
+    output_dir = "src/posts"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # 検索先も src/posts 内に変更
+    existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
     
     # 1. 二重実行ガード
     if existing_files:
@@ -32,11 +38,14 @@ def main():
     try:
         content, used_model = generate_text_with_fallback(api_key, prompt)
 
+        # 保存先パスを src/posts/ 配下に変更
         filename = f"{today_str}-auto-generated.md"
-        with open(filename, "w", encoding="utf-8") as f:
+        filepath = os.path.join(output_dir, filename)
+        
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         
-        msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filename}"
+        msg = f"記事の生成に成功しました！\n使用モデル: {used_model}\nファイル名: {filepath}"
         print(msg)
         send_discord_notify(msg, is_error=False)
 
