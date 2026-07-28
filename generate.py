@@ -57,6 +57,18 @@ def update_sitemap_xml(output_dir="src/posts"):
         f'    <lastmod>{today_str}</lastmod>',
         '    <changefreq>daily</changefreq>',
         '    <priority>1.0</priority>',
+        '  </url>',
+        '  <url>',
+        f'    <loc>{base_url}privacy.html</loc>',
+        f'    <lastmod>{today_str}</lastmod>',
+        '    <changefreq>monthly</changefreq>',
+        '    <priority>0.5</priority>',
+        '  </url>',
+        '  <url>',
+        f'    <loc>{base_url}about.html</loc>',
+        f'    <lastmod>{today_str}</lastmod>',
+        '    <changefreq>monthly</changefreq>',
+        '    <priority>0.5</priority>',
         '  </url>'
     ]
     

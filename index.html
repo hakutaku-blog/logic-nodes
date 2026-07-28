@@ -30,6 +30,12 @@
       gtag('config', window.GA_MEASUREMENT_ID);
     </script>
 
+    <!-- Google AdSense 広告スクリプト用タグ（申請通過後に発行されたスクリプトコードをここに配置） -->
+    <!--
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+     crossorigin="anonymous"></script>
+    -->
+
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -320,6 +326,26 @@
             color: var(--text-sub);
             font-size: 1.1rem;
         }
+
+        footer {
+            margin-top: 4rem;
+            padding: 2rem 1rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            background: var(--card-bg);
+        }
+
+        footer a {
+            color: var(--text-sub);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -330,7 +356,7 @@
     </header>
 
     <div class="container">
-        <!-- 検索・フィルターエリア -->
+        <!-- 検索 & フィルターエリア -->
         <div class="controls">
             <input type="text" id="searchInput" class="search-box" placeholder="キーワードで記事を検索（タイトル・タグ・概要・本文）...">
             <div class="tag-list" id="tagList">
@@ -349,6 +375,14 @@
             <div id="modalBody" class="markdown-body"></div>
         </div>
     </div>
+
+    <footer>
+        <div style="margin-bottom: 0.8rem; display: flex; justify-content: center; gap: 1.8rem; flex-wrap: wrap;">
+            <a href="./privacy.html">プライバシーポリシー</a>
+            <a href="./about.html">運営者情報 & お問い合わせ</a>
+        </div>
+        <div>&copy; 2026 Logic-Nodes. All rights reserved.</div>
+    </footer>
 
     <script>
         let allPosts = [];
@@ -575,7 +609,7 @@
             document.body.style.overflow = 'hidden';
 
             // GA4 記事閲覧イベント送信
-            if (typeof gtag === 'function' && window.GA_MEASUREMENT_ID && window.GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
+            if (typeof gtag === 'function' && window.GA_MEASUREMENT_ID) {
                 gtag('event', 'select_content', {
                     content_type: 'article',
                     item_id: post.filename,
