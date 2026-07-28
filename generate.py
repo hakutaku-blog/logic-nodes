@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import urllib.request
-from google import genai
+from datetime import datetime
 
 def send_discord_notify(message, is_error=False):
     """Discordへ通知を送信する関数"""
@@ -32,25 +32,28 @@ def send_discord_notify(message, is_error=False):
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("GEMINI_API_KEYが設定されていません。")
+        msg = "GEMINI_API_KEYが設定されていません。"
+        print(msg)
+        send_discord_notify(msg, is_error=True)
         sys.exit(1)
 
     try:
-        print("Fetching available models from Google API...")
-        client = genai.Client(api_key=api_key)
+        print("Fetching available models via REST API...")
+        # SDKを使わず、GoogleのAPIエンドポイントを直接叩いて確実なリストを取得
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+        req = urllib.request.Request(url)
         
-        # APIキーに紐づく利用可能なモデルをすべて取得する
-        available_models = []
-        for m in client.models.list_models():
-            available_models.append(m.name)
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            
+        available_models = [model.get("name") for model in data.get("models", []) if "name" in model]
         
         if not available_models:
-            msg = "利用可能なモデルが1つも見つかりませんでした。APIキーの無料枠自体が完全に封鎖されています。"
+            msg = "利用可能なモデルが見つかりませんでした。"
             print(msg)
             send_discord_notify(msg, is_error=True)
             sys.exit(1)
         
-        # 取得したモデル一覧を整形してDiscordへ通知
         model_list_str = "\n".join(available_models)
         
         # Discordの文字数制限対策
@@ -61,9 +64,14 @@ def main():
         print(msg)
         send_discord_notify(msg, is_error=False)
         
-        # 調査目的のため、記事生成は行わずここで正常終了させる
         sys.exit(0)
 
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        msg = f"HTTP Error {e.code}: {e.reason}\n詳細: {error_body}"
+        print(msg)
+        send_discord_notify(msg, is_error=True)
+        sys.exit(1)
     except Exception as e:
         error_msg = str(e)
         msg = f"モデル一覧の取得中にエラーが発生しました。\n詳細: {error_msg}"
