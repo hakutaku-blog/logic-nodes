@@ -102,9 +102,7 @@ def main():
     # 1. 二重実行ガード
     existing_files = glob.glob(os.path.join(output_dir, f"*{today_str}*.md"))
     if existing_files:
-        msg = f"本日の記事は既に生成されています（{existing_files[0]}）。処理を安全にスキップしました。"
-        print(msg)
-        send_discord_notify(msg, is_error=False)
+        print(f"本日の記事は既に生成されています（{existing_files[0]}）。処理を安全にスキップしました。")
         sys.exit(0)
 
     # 2. APIキーの確認
