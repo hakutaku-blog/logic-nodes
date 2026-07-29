@@ -3,10 +3,9 @@ import sys
 import json
 import urllib.request
 from notify import send_discord_notify
-from gemini_api import generate_text_with_fallback
 
 def reply_to_github_issue(issue_number, comment_body, token):
-    """GitHub Issue にコメントを返信する"""
+    """GitHub Issue に定型確認コメントを返信する（API非消費）"""
     repo = os.environ.get("GITHUB_REPOSITORY", "hakutaku-blog/logic-nodes")
     url = f"https://api.github.com/repos/{repo}/issues/{issue_number}/comments"
     
@@ -18,7 +17,7 @@ def reply_to_github_issue(issue_number, comment_body, token):
     payload = {"body": comment_body}
     try:
         with urllib.request.urlopen(req, data=json.dumps(payload).encode('utf-8')) as res:
-            print(f"Replied to Issue #{issue_number}: {res.getcode()}")
+            print(f"Replied static message to Issue #{issue_number}: {res.getcode()}")
     except Exception as e:
         print(f"Failed to post comment to Issue #{issue_number}: {e}")
 
@@ -42,8 +41,9 @@ def main():
         print("Event triggered by bot. Skipping.")
         sys.exit(0)
 
-    if not issue:
-        print("No issue found in event.")
+    # 新規作成(opened)以外は無視してAPI/通知を節約
+    if action != "opened" or not issue:
+        print(f"Action '{action}' ignored.")
         sys.exit(0)
 
     issue_number = issue.get("number")
@@ -52,51 +52,21 @@ def main():
     html_url = issue.get("html_url", "")
     user_login = issue.get("user", {}).get("login", "ゲスト")
 
-    api_key = os.environ.get("GEMINI_API_KEY")
     github_token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_PAT")
 
-    print(f"Processing Issue #{issue_number}: {issue_title} by {user_login}")
+    # 1. 定型の自動受領コメント（Gemini API消費ゼロ）
+    static_reply = "お問い合わせありがとうございます！メッセージを受信いたしました。運営者（Logic-Nodes管理チーム）にて内容を確認次第、対応させていただきます。"
+    if github_token:
+        reply_to_github_issue(issue_number, static_reply, github_token)
 
-    prompt = f"""
-    あなたは技術ブログ「Logic-Nodes」の公式AIアシスタントです。
-    読者またはユーザーから以下の問い合わせ（GitHub Issue）が届きました。
-    丁寧、親切、かつ技術的に正確で分かりやすい返信コメントを日本語で作成してください。
-
-    【問い合わせタイトル】
-    {issue_title}
-
-    【問い合わせ本文】
-    {issue_body}
-
-    【最新コメント（あれば）】
-    {comment.get('body', '') if comment else 'なし'}
-
-    【返信のルール】
-    1. 感謝の言葉から始めてください。
-    2. 質問やご意見に対して的確な回答や対応方針を述べてください。
-    3. 必要に応じて「Logic-Nodes 運営チームにて順次確認・対応いたします」と添えてください。
-    """
-
-    try:
-        ai_reply, used_model = generate_text_with_fallback(api_key, prompt)
-        footer = "\n\n---\n*※このコメントは Logic-Nodes の AI サポートアシスタントにより自動生成・返信されました。*"
-        full_reply = ai_reply + footer
-
-        if github_token:
-            reply_to_github_issue(issue_number, full_reply, github_token)
-
-        # Discord への通知
-        discord_msg = f"📩 **新しいお問い合わせ（Issue #{issue_number}）を受信し、AIが自動返信しました！**\n\n" \
-                      f"👤 **投稿者:** {user_login}\n" \
-                      f"📌 **タイトル:** {issue_title}\n" \
-                      f"🔗 **URL:** {html_url}\n\n" \
-                      f"🤖 **AI返信:**\n```\n{ai_reply[:300]}...\n```"
-        
-        send_discord_notify(discord_msg, is_error=False)
-
-    except Exception as e:
-        print(f"Error handling issue: {e}")
-        send_discord_notify(f"❌ Issue #{issue_number} の自動返信処理中にエラーが発生しました: {e}", is_error=True)
+    # 2. Discord への即時通知（Gemini API消費ゼロ）
+    discord_msg = f"📩 **新しいお問い合わせ（Issue #{issue_number}）が届きました！**\n\n" \
+                  f"👤 **投稿者:** {user_login}\n" \
+                  f"📌 **タイトル:** {issue_title}\n" \
+                  f"🔗 **URL:** {html_url}\n\n" \
+                  f"📝 **内容:**\n```\n{issue_body[:300]}\n```"
+    
+    send_discord_notify(discord_msg, is_error=False)
 
 if __name__ == "__main__":
     main()
