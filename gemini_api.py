@@ -2,18 +2,18 @@ import os
 import time
 from google import genai
 
-# 確実に動作する推奨モデルのフォールバック優先順位リスト
+# Google AI Studioの現行推奨アクティブモデルリスト
 PREFERRED_MODELS = [
-    "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-2.0-flash-lite",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-lite"
 ]
 
-def generate_text_with_fallback(api_key, prompt, preferred_model="gemini-2.5-flash"):
+def generate_text_with_fallback(api_key, prompt, preferred_model="gemini-2.0-flash"):
     """
-    指定モデルおよびフォールバックモデルを試行する。
-    429 (レート制限/過負荷) 発生時は15秒待機して自動リトライを行う。
+    アクティブモデルを試行する。
+    429 (レート制限/過負荷) 発生時は60秒待機して自動リトライを行う。
     """
     client = genai.Client(api_key=api_key)
     
@@ -27,7 +27,7 @@ def generate_text_with_fallback(api_key, prompt, preferred_model="gemini-2.5-fla
 
     errors = []
     for model_name in models_to_try:
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 print(f"Trying model: {model_name} (attempt {attempt + 1})...")
                 response = client.models.generate_content(
@@ -41,15 +41,15 @@ def generate_text_with_fallback(api_key, prompt, preferred_model="gemini-2.5-fla
                 err_str = str(e)
                 print(f"Model {model_name} attempt {attempt + 1} failed: {err_str}")
                 
-                # 429 レート制限の場合は待機して再試行
+                # 429 (レート制限・クォータ一時枯渇) の場合は60秒リセット待機
                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    wait_sec = 15 * (attempt + 1)
-                    print(f"Rate limited (429). Waiting {wait_sec}s before retrying...")
+                    wait_sec = 60
+                    print(f"Rate limited (429). Waiting {wait_sec}s for quota reset...")
                     time.sleep(wait_sec)
                 else:
                     errors.append(f"{model_name}: {err_str}")
                     break
         else:
-            errors.append(f"{model_name}: Rate limit exceeded after retries.")
+            errors.append(f"{model_name}: Exceeded rate limit after retries.")
 
-    raise RuntimeError(f"すべての代替モデルでの生成に失敗しました。\nエラー詳細:\n" + "\n".join(errors))
+    raise RuntimeError(f"すべての代替モデルでの生成に失敗しました。\n詳細:\n" + "\n".join(errors))
