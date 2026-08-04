@@ -31,9 +31,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
           GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
-        run: |
-          python test_genai.py
-          python generate.py
+        run: python generate.py
 
       - name: Commit and Push generated article
         run: |
