@@ -345,6 +345,97 @@
         footer a:hover {
             color: var(--accent);
         }
+        /* Author Intro & Chat Bubble UI */
+        .author-intro {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .author-intro::before {
+            content: "🎙️ 解説パーソナリティ";
+            display: inline-block;
+            background: var(--accent);
+            color: #0f172a;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.2rem 0.8rem;
+            border-radius: 999px;
+            position: absolute;
+            top: -12px;
+            left: 1.5rem;
+        }
+        .author-intro p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .chat-row {
+            display: flex;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .chat-row.taku {
+            flex-direction: row-reverse;
+        }
+        .chat-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .chat-row.haku .chat-avatar {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #fff;
+        }
+        .chat-row.taku .chat-avatar {
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: #fff;
+        }
+        .chat-content {
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-row.taku .chat-content {
+            align-items: flex-end;
+        }
+        .chat-name {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .chat-bubble {
+            padding: 0.8rem 1.2rem;
+            border-radius: 18px;
+            font-size: 1rem;
+            line-height: 1.6;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chat-row.haku .chat-bubble {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-top-left-radius: 4px;
+        }
+        .chat-row.taku .chat-bubble {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-top-right-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -596,12 +687,40 @@
             const modal = document.getElementById('articleModal');
             const modalBody = document.getElementById('modalBody');
 
+            // MarkdownからHTMLへ変換
+            let htmlContent = marked.parse(post.content);
+
+            // 吹き出しチャットUIへの正規表現置換
+            // 対象: <p><strong>ハク</strong>: テキスト</p> などのパターン
+            htmlContent = htmlContent.replace(/<p><strong>(ハク|タク)<\/strong>[:：]\s*(.*?)<\/p>/g, function(match, name, text) {
+                const isHaku = (name === 'ハク');
+                const cls = isHaku ? 'haku' : 'taku';
+                const initial = name.charAt(0);
+                return `
+                <div class="chat-row ${cls}">
+                    <div class="chat-avatar">${initial}</div>
+                    <div class="chat-content">
+                        <div class="chat-name">${name}</div>
+                        <div class="chat-bubble">${text}</div>
+                    </div>
+                </div>
+                `;
+            });
+
+            const authorIntro = `
+                <div class="author-intro">
+                    <p>こんにちは！若手エンジニアの<strong>ハク</strong>と、シニアエンジニアの<strong>タク</strong>です。<br>
+                    当ブログでは、最新の技術トレンドや海外ニュースを2人の対話形式で分かりやすく深掘りしていきます！</p>
+                </div>
+            `;
+
             modalBody.innerHTML = `
                 <h1 style="margin-top:0;">${post.title}</h1>
                 <div style="color: var(--text-sub); margin-bottom: 1.5rem; font-size:0.9rem;">
                     📅 ${post.date} | ${post.tags.map(t => `#${t}`).join(' ')}
                 </div>
-                ${marked.parse(post.content)}
+                ${authorIntro}
+                ${htmlContent}
             `;
 
             modal.style.display = 'block';
