@@ -3,6 +3,7 @@ import sys
 import glob
 import json
 import urllib.request
+import re
 from datetime import datetime, timezone, timedelta
 from notify import send_discord_notify
 from gemini_api import generate_text_with_fallback
@@ -129,7 +130,8 @@ def main():
     2. タクの解説の中には、必ず「Markdownの表（Table）」または「箇条書き」を使用し、客観的で構造化された技術データを提供してください。
     3. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含めてください。
     4. date には本日の日付 "{today_str}" を YYYY-MM-DD 形式で指定してください。
-    5. 最先頭行は直接 `---` で開始してください（コードブロックで囲まないこと）。
+    5. 最先頭行は必ず `---` で開始してください（コードブロックで囲まないこと）。
+    6. 【重要】タイトル（H1見出しおよびFrontmatter）に、架空のエピソード番号（例: #42など）やシリーズ表記を勝手に付与することを固く禁じます。
 
     【本日のトレンドトピック】
     {latest_trends}
@@ -138,6 +140,10 @@ def main():
     # 5. 記事の生成（フォールバック付き）と保存
     try:
         content, used_model = generate_text_with_fallback(api_key, prompt)
+
+        # ハルシネーション対策（事後検知・自己レビュー）
+        # 架空のナンバリング（例: 【Logic Nodes #42】）が生成された場合は強制除去
+        content = re.sub(r'【?Logic Nodes #\d+】?\s*', '', content)
 
         filename = f"{today_str}-auto-generated.md"
         filepath = os.path.join(output_dir, filename)
