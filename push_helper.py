@@ -20,7 +20,7 @@ def main():
     push_url = f"https://x-access-token:{token}@github.com/hakutaku-blog/logic-nodes.git"
     
     subprocess.run([git_exe, "add", "."], check=True)
-    subprocess.run([git_exe, "commit", "-m", "fix: correct filename and date of today's post from 8/7 to 8/8"], capture_output=True)
+    subprocess.run([git_exe, "commit", "-m", "fix: rollback mistaken rename to restore missing 8/7 article"], capture_output=True)
     subprocess.run([git_exe, "push", push_url, "main"])
 
 if __name__ == "__main__":

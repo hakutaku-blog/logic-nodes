@@ -1,6 +1,6 @@
 ---
 title: "LLMをシリコンに刻む！？AMD×Taalas買収劇からIoTセキュリティ、マリオに学ぶパレート最適まで"
-date: "2026-08-08"
+date: "2026-08-07"
 tags: ["AMD", "AI-Hardware", "Security", "IoT", "Algorithm", "Pareto"]
 description: "テック系ラジオ『ハク＆タクのLogic Nodes』。AMDのTaalas買収によるシリコンモデル刻印技術、子供用スマートウォッチ乗っ取り事件に見るIoTの落とし穴、そして『マリオ×パレート最適』による多目的最適化まで深掘り解説！"
 ---
