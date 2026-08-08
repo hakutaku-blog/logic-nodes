@@ -116,22 +116,19 @@ def main():
     # 3. トレンドの自動巡回・収集（APIを叩く前に実行）
     latest_trends = fetch_tech_trends()
 
-    # 4. 収集したトレンドをAIに渡す動的プロンプトの構築
+    # 4. 今日のトレンドをAIに渡すプロンプトの構築
     prompt = f"""
-    あなたはテック系ラジオ番組『ハク＆タクのLogic Nodes』の台本ライターです。
+    あなたはテック系ブログ『ハク＆タクのLogic Nodes』のメインライターです。
     以下の海外テックトレンドをテーマに、対話形式の技術ブログ記事をMarkdown形式で1つ作成してください。
 
-    【キャラクター設定と行動ルール】
-    - ハク (MC): 読者目線の若手エンジニア。必ず「具体的な技術の仕組み」「既存技術との違い」「現場でのデメリット」など、鋭い技術的な質問を投げかけてください。
-    - タク (解説): 経験豊富なシニアエンジニア。ハクの質問に対し、アーキテクチャの背景や専門用語を用いて具体的に解説してください。
-
-    【出力ルール（重要）】
-    1. 記事全編を「ハク」と「タク」の対話形式で構成し、技術的な深掘りを行ってください。
-    2. タクの解説の中には、必ず「Markdownの表（Table）」または「箇条書き」を使用し、客観的で構造化された技術データを提供してください。
-    3. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含めてください。
-    4. date には本日の日付 "{today_str}" を YYYY-MM-DD 形式で指定してください。
-    5. 最先頭行は必ず `---` で開始してください（コードブロックで囲まないこと）。
-    6. 【重要】タイトル（H1見出しおよびFrontmatter）に、架空のエピソード番号（例: #42など）やシリーズ表記を勝手に付与することを固く禁じます。
+    【記事の構成ルール】
+    1. タイトル（FrontmatterおよびH1見出し）は、ラジオ番組名等を含めず、「記事のメインテーマのみ」を端的に表すブログタイトルにしてください。（例: AI社員の台頭とエンジニアの未来）
+    2. 記事の本文（最初のハクのセリフ）は、必ず以下のフレーズを一言一句変えずに使用して開始してください。
+       **ハク**: みなさんこんにちは！テック系ラジオ『ハク＆タクのLogic Nodes』の時間です。MCのハクです！
+    3. 記事全体を「ハク (MC)」と「タク (解説)」の対話形式で構成し、専門的な深掘りを行ってください。
+    4. タクの解説の中には、必ず「Markdownの表（Table）」または「箇条書き」を使用し、客観的で構造化された技術データを提供してください。
+    5. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含めてください。
+    6. date には本日の日付 "{today_str}" を YYYY-MM-DD 形式で指定してください。
 
     【本日のトレンドトピック】
     {latest_trends}
@@ -141,9 +138,25 @@ def main():
     try:
         content, used_model = generate_text_with_fallback(api_key, prompt)
 
-        # ハルシネーション対策（事後検知・自己レビュー）
-        # 架空のナンバリング（例: 【Logic Nodes #42】）が生成された場合は強制除去
-        content = re.sub(r'【?Logic Nodes #\d+】?\s*', '', content)
+        # 出力結果のサニタイズ処理と通知用ログの記録
+        sanitize_logs = []
+
+        # 【対策1】Markdownフェンスの強制除去
+        if re.search(r'^```(?:markdown)?\s*', content) or re.search(r'\s*```$', content):
+            content = re.sub(r'^```(?:markdown)?\s*', '', content)
+            content = re.sub(r'\s*```$', '', content)
+            sanitize_logs.append("Markdownフェンス（```）を検知し、自動除去しました")
+
+        # 【対策2】おしゃべりテキスト（Chatty Assistant）の強制切除
+        match = re.search(r'^---$', content, flags=re.MULTILINE)
+        if match and match.start() > 0:
+            content = content[match.start():]
+            sanitize_logs.append("不要な挨拶テキストを検知し、Frontmatter開始位置まで切除しました")
+
+        # 【対策3】ハルシネーション（架空エピソード番号）の除去
+        if re.search(r'(Logic Nodes)\s*(?:#|第|Vol\.?)\s*\d+\s*(?:回)?', content, flags=re.IGNORECASE):
+            content = re.sub(r'(Logic Nodes)\s*(?:#|第|Vol\.?)\s*\d+\s*(?:回)?', r'\1', content, flags=re.IGNORECASE)
+            sanitize_logs.append("架空のエピソード番号（ハルシネーション）を検知し、自動除去しました")
 
         filename = f"{today_str}-auto-generated.md"
         filepath = os.path.join(output_dir, filename)
@@ -167,12 +180,16 @@ def main():
         else:
             stats_str = "📊 **昨日のアクセス実績:** （GA4 APIデータ取得中）\n"
 
-        msg = f"📝 **本日更新の記事:**\n「{article_title}」\n\n" \
+        msg = f"✅ **本日の更新完了:**\n「{article_title}」\n\n" \
               f"{stats_str}\n" \
               f"🤖 **使用モデル:** {used_model}\n" \
               f"📁 **保存先:** `{filepath}`\n\n" \
-              f"【収集したトレンド】\n{latest_trends}"
+              f"【取得したトレンド】\n{latest_trends}"
         
+        if sanitize_logs:
+            msg += "\n\n**【⚙️ 自動サニタイズ実行レポート】**\n" + "\n".join(f"- {log}" for log in sanitize_logs)
+            msg += "\n*※AIの出力ブレを検知し、システムが自動補正しました。*"
+
         print(msg)
         send_discord_notify(msg, is_error=False)
 
