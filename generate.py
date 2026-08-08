@@ -3,7 +3,7 @@ import sys
 import glob
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from notify import send_discord_notify
 from gemini_api import generate_text_with_fallback
 
@@ -45,7 +45,7 @@ def update_posts_manifest(output_dir="src/posts"):
 def update_sitemap_xml(output_dir="src/posts"):
     """sitemap.xml を自動生成・更新する"""
     base_url = "https://hakutaku-blog.github.io/logic-nodes/"
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
     md_files = [os.path.basename(f) for f in glob.glob(os.path.join(output_dir, "*.md")) if f.endswith(".md")]
     md_files.sort(reverse=True)
     
@@ -91,7 +91,7 @@ def update_sitemap_xml(output_dir="src/posts"):
     print(f"Updated {sitemap_path} with {len(md_files)} URLs.")
 
 def main():
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
     output_dir = "src/posts"
     os.makedirs(output_dir, exist_ok=True)
     
