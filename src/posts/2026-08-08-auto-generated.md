@@ -5,7 +5,7 @@ tags: ["AI", "Career", "Vibe-coding", "TechTrends"]
 description: "テック系ラジオ『ハク＆タクのLogic Nodes』。AIエージェントが「AI社員」として自律稼働する未来や、AI生成コードをそのまま本番投入する「Vibe-coding」への賛否両論など、2026年のエンジニアの生存戦略を語ります！"
 ---
 
-# 【Logic Nodes #43】AI社員が採用される日！？Hacker Newsで議論される「Vibe-coding」とエンジニアの生存戦略
+# AI社員が採用される日！？Hacker Newsで議論される「Vibe-coding」とエンジニアの生存戦略
 
 **ハク**: みなさんこんにちは！テック系ラジオ『ハク＆タクのLogic Nodes』の時間です。MCのハクです！今日も最新のテックトレンドを分かりやすくお届けします。
 
