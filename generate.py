@@ -168,7 +168,6 @@ def main():
         update_sitemap_xml(output_dir)
         
         # 記事タイトルのパース
-        import re
         title_match = re.search(r'title:\s*["\']?(.*?)["\']?\r?$', content, re.MULTILINE)
         article_title = title_match.group(1) if title_match else filename
 

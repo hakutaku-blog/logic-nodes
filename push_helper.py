@@ -20,7 +20,7 @@ def main():
     push_url = f"https://x-access-token:{token}@github.com/hakutaku-blog/logic-nodes.git"
     
     subprocess.run([git_exe, "add", "."], check=True)
-    subprocess.run([git_exe, "commit", "-m", "feat(generate): add 3-step robust sanitization against LLM pitfalls and report results to Discord"], capture_output=True)
+    subprocess.run([git_exe, "commit", "-m", "fix: remove duplicate local import re causing UnboundLocalError"], capture_output=True)
     subprocess.run([git_exe, "push", push_url, "main"])
 
 if __name__ == "__main__":
