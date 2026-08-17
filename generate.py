@@ -9,25 +9,51 @@ from notify import send_discord_notify
 from gemini_api import generate_text_with_fallback
 
 def fetch_tech_trends():
-    """海外テックForum（Hacker News）から最新のトップトレンドを自律的に取得する"""
+    """海外テックForum（Hacker News）から最新のトップトレンドとトップコメントを取得する"""
     trends = []
+    import html
     try:
-        print("Fetching latest tech trends from Hacker News...")
+        print("Fetching latest tech trends and comments from Hacker News...")
         # Hacker Newsのトップ記事IDを取得
         url = "https://hacker-news.firebaseio.com/v0/topstories.json"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as response:
             story_ids = json.loads(response.read().decode('utf-8'))
             
-        # 上位3件のタイトルを取得してリスト化
-        for sid in story_ids[:3]:
+        # 上位2件のタイトルとコメントを取得してリスト化
+        for sid in story_ids[:2]:
             story_url = f"https://hacker-news.firebaseio.com/v0/item/{sid}.json"
             sreq = urllib.request.Request(story_url)
             with urllib.request.urlopen(sreq) as sres:
                 story = json.loads(sres.read().decode('utf-8'))
                 title = story.get('title', '')
-                if title:
-                    trends.append(f"・{title}")
+                kids = story.get('kids', [])
+                if not title:
+                    continue
+                
+                trend_text = f"【テーマ】: {title}\n"
+                
+                # トップ3件のコメントを取得
+                comments = []
+                for kid_id in kids[:3]:
+                    kid_url = f"https://hacker-news.firebaseio.com/v0/item/{kid_id}.json"
+                    try:
+                        kreq = urllib.request.Request(kid_url)
+                        with urllib.request.urlopen(kreq) as kres:
+                            kid_data = json.loads(kres.read().decode('utf-8'))
+                            if kid_data and 'text' in kid_data and not kid_data.get('deleted'):
+                                c_text = html.unescape(kid_data['text'])
+                                c_text = re.sub(r'<[^>]+>', ' ', c_text) # HTMLタグ除去
+                                if len(c_text) > 300:
+                                    c_text = c_text[:300] + "..."
+                                comments.append(f"- 現場の声: {c_text}")
+                    except Exception:
+                        pass
+                
+                if comments:
+                    trend_text += "【世界中のエンジニアのリアルな声（賛否両論）】:\n" + "\n".join(comments) + "\n"
+                
+                trends.append(trend_text)
     except Exception as e:
         print(f"トレンド取得失敗: {e}")
         trends.append("※最新トレンドの取得に失敗しました。一般的な技術テーマで補完してください。")
@@ -118,19 +144,20 @@ def main():
 
     # 4. 今日のトレンドをAIに渡すプロンプトの構築
     prompt = f"""
-    あなたはテック系ブログ『ハク＆タクのLogic Nodes』のメインライターです。
-    以下の海外テックトレンドをテーマに、対話形式の技術ブログ記事をMarkdown形式で1つ作成してください。
+    あなたはトップクラスのテックブログ編集者です。
+    以下の海外テックトレンド（Hacker Newsの記事と実際の開発者からの賛否両論コメント）を元に、対話形式の技術ブログ記事をMarkdown形式で作成してください。
 
-    【記事の構成ルール】
-    1. タイトル（FrontmatterおよびH1見出し）は、ラジオ番組名等を含めず、「記事のメインテーマのみ」を端的に表すブログタイトルにしてください。（例: AI社員の台頭とエンジニアの未来）
-    2. 記事の本文（最初のハクのセリフ）は、必ず以下のフレーズを一言一句変えずに使用して開始してください。
+    【制約事項：E-E-A-Tと読者価値の担保（AdSense対策）】
+    1. 単なる翻訳や要約は絶対に行わず、必ず「実務的トレードオフ分析（弁証法）」を行ってください。
+    2. ハク（野心的なイノベーター）の役割: 最新技術の「可能性・メリット・開発者体験の向上」を熱く語る。
+    3. タク（歴戦のSRE・実務家）の役割: HNのリアルな声に基づき、「本番環境でのリスク・技術的負債・エッジケース・代替手段との比較」をプロの視点で鋭く指摘する。
+    4. 対話の最後には、必ず「ユースケース診断（現場で採用すべきケース/見送るべきケース）」を箇条書き（Markdownリスト）で出力し、実務的な結論を提示してください。
+    5. タイトル（FrontmatterおよびH1見出し）は、ラジオ番組名等を含めず、「記事のメインテーマのみ」を端的に表してください。（例: 〇〇技術の台頭と現場導入へのハードル）
+    6. 記事の本文（最初のハクのセリフ）は、必ず以下のフレーズを一言一句変えずに使用して開始してください。
        **ハク**: みなさんこんにちは！テック系ラジオ『ハク＆タクのLogic Nodes』の時間です。MCのハクです！
-    3. 記事全体を「ハク (MC)」と「タク (解説)」の対話形式で構成し、専門的な深掘りを行ってください。
-    4. タクの解説の中には、必ず「Markdownの表（Table）」または「箇条書き」を使用し、客観的で構造化された技術データを提供してください。
-    5. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含めてください。
-    6. date には本日の日付 "{today_str}" を YYYY-MM-DD 形式で指定してください。
+    7. 記事先頭には YAML Frontmatter（title, date, tags, description）を必ず含め、date は "{today_str}" を YYYY-MM-DD 形式で指定してください。
 
-    【本日のトレンドトピック】
+    【本日のトレンドトピックと現場のリアルな声】
     {latest_trends}
     """
 
