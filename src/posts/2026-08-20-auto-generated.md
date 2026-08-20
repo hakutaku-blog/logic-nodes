@@ -1,4 +1,10 @@
 ---
+title: "OpenRouterのStripe統合とGo 1.27から読み解く実務的トレードオフ"
+date: "2026-08-20"
+tags: ["Tech", "OpenRouter", "Go"]
+description: "OpenRouterのStripe買収によるAIプロキシへの影響と、Go 1.27の新機能が現場にもたらすメリット・デメリットをシニアエンジニア視点で徹底分析します。"
+---
+
 
 ## 1. OpenRouterのStripe参加：AIプロキシの価値とプラットフォーム依存のリスク
 

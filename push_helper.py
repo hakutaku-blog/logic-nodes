@@ -20,7 +20,7 @@ def main():
     push_url = f"https://x-access-token:{token}@github.com/hakutaku-blog/logic-nodes.git"
     
     subprocess.run([git_exe, "add", "."], check=True)
-    subprocess.run([git_exe, "commit", "-m", "docs: update site copy to match new dialectic HN comments strategy for E-E-A-T"], capture_output=True)
+    subprocess.run([git_exe, "commit", "-m", "fix: strictly enforce frontmatter layout with prompt template to prevent missing titles"], capture_output=True)
     subprocess.run([git_exe, "push", push_url, "main"])
 
 if __name__ == "__main__":
