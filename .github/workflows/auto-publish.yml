@@ -2,7 +2,7 @@ name: Auto Generate and Publish Blog Post
 
 on:
   schedule:
-    - cron: '0 22 * * *' # 日本時間 朝7:00 (GitHubの混雑状況により10〜40分程度の待ち時間が発生します)
+    - cron: '17 18 * * *' # 日本時間 深夜3:17 (GitHubの混雑状況を避けるため深夜帯の半端な時間を指定)
   workflow_dispatch:
 
 jobs:
