@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '17 18 * * *' # 日本時間 深夜3:17 (GitHubの混雑状況を避けるため深夜帯の半端な時間を指定)
   workflow_dispatch:
+    inputs:
+      target_date:
+        description: '対象日 (例: 2026-08-27)。空欄の場合は今日の日付になります。'
+        required: false
+        type: string
 
 jobs:
   generate-and-publish:
@@ -31,6 +36,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
           GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
+          TARGET_DATE: ${{ github.event.inputs.target_date }}
         run: python generate.py
 
       - name: Commit and Push generated article and/or model blacklist

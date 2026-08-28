@@ -118,7 +118,12 @@ def update_sitemap_xml(output_dir="src/posts"):
     print(f"Updated {sitemap_path} with {len(md_files)} URLs.")
 
 def main():
-    today_str = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
+    target_date = os.environ.get("TARGET_DATE", "").strip()
+    if target_date:
+        today_str = target_date
+    else:
+        today_str = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
+    
     output_dir = "src/posts"
     os.makedirs(output_dir, exist_ok=True)
     
