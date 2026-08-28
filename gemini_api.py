@@ -81,9 +81,9 @@ def generate_text_with_fallback(api_key, prompt, preferred_model=None):
                 blacklist_updated = True
                 errors.append(f"{model_name}: 永続的エラーのためブラックリストへ追加しました")
             else:
-                # 一時的なエラーの場合はブラックリストには入れず、エラーを記録して終了する（ルール3）
+                # 一時的なエラーの場合はブラックリストには入れず、エラーを記録して次のモデルへフォールバックする
                 errors.append(f"{model_name}: 一時的なエラー ({err_str.splitlines()[0]})")
-                break 
+                continue 
 
     if blacklist_updated:
         save_blacklist(blacklist)
