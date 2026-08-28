@@ -8,17 +8,30 @@ from datetime import datetime, timezone, timedelta
 from notify import send_discord_notify
 from gemini_api import generate_text_with_fallback
 
-def fetch_tech_trends():
-    """海外テックForum（Hacker News）から最新のトップトレンドとトップコメントを取得する"""
+def fetch_tech_trends(target_date_str=None):
+    """海外テックForum（Hacker News）から最新（または指定日）のトップトレンドとトップコメントを取得する"""
     trends = []
     import html
+    import datetime
     try:
-        print("Fetching latest tech trends and comments from Hacker News...")
-        # Hacker Newsのトップ記事IDを取得
-        url = "https://hacker-news.firebaseio.com/v0/topstories.json"
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req) as response:
-            story_ids = json.loads(response.read().decode('utf-8'))
+        story_ids = []
+        if target_date_str:
+            print(f"Fetching tech trends and comments for {target_date_str} via Algolia API...")
+            dt = datetime.datetime.strptime(target_date_str, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+            start_ts = int(dt.timestamp())
+            end_ts = int((dt + datetime.timedelta(days=1)).timestamp())
+            url = f"https://hn.algolia.com/api/v1/search?tags=story&numericFilters=created_at_i>{start_ts},created_at_i<{end_ts}"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                story_ids = [hit['objectID'] for hit in data.get('hits', [])]
+        else:
+            print("Fetching latest tech trends and comments from Hacker News...")
+            # Hacker Newsのトップ記事IDを取得
+            url = "https://hacker-news.firebaseio.com/v0/topstories.json"
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req) as response:
+                story_ids = json.loads(response.read().decode('utf-8'))
             
         # 上位2件のタイトルとコメントを取得してリスト化
         for sid in story_ids[:2]:
@@ -145,7 +158,7 @@ def main():
         sys.exit(1)
 
     # 3. トレンドの自動巡回・収集（APIを叩く前に実行）
-    latest_trends = fetch_tech_trends()
+    latest_trends = fetch_tech_trends(target_date)
 
     # 4. 今日のトレンドをAIに渡すプロンプトの構築
     prompt = f"""
