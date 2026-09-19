@@ -51,8 +51,8 @@ def generate_text_with_fallback(api_key, prompt, preferred_model=None):
                     dynamic_models.append(name)
     except Exception as e:
         print(f"Failed to fetch model list: {e}")
-        # 動的取得自体が失敗した場合の最低限のフォールバック
-        dynamic_models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.6-flash", "gemini-3.5-flash"]
+        # 動的取得自体が失敗した場合の最低限のフォールバック（最新の公式提供モデル）
+        dynamic_models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"]
         
     # モデル名を降順にソート（バージョン番号が大きい＝新しいモデルから優先的に試すため）
     # 例: gemini-3.6-flash -> gemini-3.5-flash -> gemini-2.5-flash
